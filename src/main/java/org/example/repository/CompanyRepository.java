@@ -27,6 +27,14 @@ public class CompanyRepository extends BaseRepository<Company, UUID>{
         );
     }
 
+    public boolean existsByName(String name) {
+        return executeRead(em ->
+            em.createQuery("SELECT COUNT(c) FROM Company c WHERE c.name = :name", Long.class)
+                .setParameter("name", name)
+                .getSingleResult() > 0
+        );
+    }
+
     public Optional<Company> findByOrgNum(String orgNum) {
         return executeRead(em ->
             em.createQuery("SELECT c FROM Company c WHERE c.orgNum = :orgNum", Company.class)
