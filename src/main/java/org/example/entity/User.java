@@ -24,12 +24,14 @@ public class User {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column
+    @Column(unique = true, nullable = false)
     private String email;
 
+    // TODO: Encrypt password
     @Column
     private String password;
 
+    // TODO: Encrypt SSN
     @Column
     private String ssn;
 }

@@ -8,8 +8,8 @@ import java.util.UUID;
 @Builder
 public record UserDTO(
     UUID id,
-    String first_name,
-    String last_name,
+    String firstName,
+    String lastName,
     String email
 ) {
 }
