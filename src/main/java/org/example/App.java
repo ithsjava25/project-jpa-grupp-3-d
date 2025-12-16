@@ -9,11 +9,24 @@ import org.example.util.JpaUtil;
 
 public class App {
     public static void main(String[] args) {
-        EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
-        UserRepository userRepository = new UserRepository(emf);
-        UserService userService = new UserService(userRepository);
 
-        User user = new User();
-        userRepository.save(user);
+        // Static EMF for whole application
+        EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
+
+        // Repository initialization
+        UserRepository userRepository = new UserRepository(emf);
+        // InvoiceRepository invoiceRepository = new InvoiceRepository(emf);
+        // etc...
+
+        // Service initialization
+        UserService userService = new UserService(userRepository);
+        // InvoiceService invoiceService = new InvoiceService(emf);
+
+
+        // Test User example implementation
+        User user = new User(
+            "test", "test", "test@email.com", "password", "123456-0000"
+        );
+        userService.create(user);
     }
 }
