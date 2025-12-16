@@ -3,6 +3,7 @@ package org.example.repository;
 import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.Company;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,6 +51,14 @@ public class CompanyRepository extends BaseRepository<Company, UUID>{
                 .setParameter("email", email)
                 .getResultStream()
                 .findFirst()
+        );
+    }
+
+    public List<Company> findByName(String name) {
+        return executeRead(em ->
+            em.createQuery("SELECT c FROM Company c WHERE c.name LIKE :name", Company.class)
+                .setParameter("name", "%" + name + "%")
+                .getResultList()
         );
     }
 }
