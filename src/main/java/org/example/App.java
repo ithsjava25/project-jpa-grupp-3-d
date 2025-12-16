@@ -6,6 +6,8 @@ import org.example.repository.UserRepository;
 import org.example.service.UserService;
 import org.example.util.JpaUtil;
 
+import java.time.LocalDateTime;
+
 public class App {
     public static void main(String[] args) {
 
@@ -29,6 +31,7 @@ public class App {
         user.setEmail("test@email.com");
         user.setPassword("password");
         user.setSsn("123456-0000");
+        user.setCreated_at(LocalDateTime.now());
 
         userService.create(user);
 

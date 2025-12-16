@@ -2,6 +2,7 @@ package org.example.dto;
 
 import lombok.Builder;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -10,6 +11,7 @@ public record UserDTO(
     UUID id,
     String firstName,
     String lastName,
-    String email
+    String email,
+    LocalDateTime created_at
 ) {
 }

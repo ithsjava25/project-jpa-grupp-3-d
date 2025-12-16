@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -34,4 +35,7 @@ public class User {
     // TODO: Encrypt SSN
     @Column(unique = true, nullable = false)
     private String ssn;
+
+    @Column
+    private LocalDateTime created_at;
 }
