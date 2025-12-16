@@ -24,9 +24,13 @@ public class App {
 
 
         // Test User example implementation
-        User user = new User(
-            "test", "test", "test@email.com", "password", "123456-0000"
-        );
+        User user = new User();
+        user.setFirstName("testUser");
+        user.setLastName("testUser");
+        user.setEmail("test@email.com");
+        user.setPassword("password");
+        user.setSsn("123456-0000");
+
         userService.create(user);
     }
 }
