@@ -25,6 +25,13 @@ public class CompanyService {
         String city,
         String country) {
 
+        if (companyRepository.existsByOrgNum(orgNum)) {
+            throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
+        }
+        if (companyRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Company with email " + email + " already exists");
+        }
+
         Company company = Company.builder()
             .orgNum(orgNum)
             .email(email)
