@@ -7,17 +7,20 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class User {
+public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
 
     @Column(name = "first_name")
     private String firstName;
@@ -28,12 +31,14 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    // TODO: Encrypt password
-    private String password;
+    private String address;
+    private String city;
+    private String country;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
 }

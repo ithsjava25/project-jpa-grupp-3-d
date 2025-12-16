@@ -24,7 +24,7 @@ public class UserService {
         user.setLastName(lastName);
         user.setEmail(email);
         user.setPassword(password);
-        user.setCreated_at(LocalDateTime.now());
+        user.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(user);
         return toDto(user);
