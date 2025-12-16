@@ -1,6 +1,7 @@
 package org.example;
 
 import jakarta.persistence.EntityManagerFactory;
+import org.example.dto.UserDTO;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
@@ -25,18 +26,15 @@ public class App {
 
 
         // Test User example implementation
-        User user = new User();
-        user.setFirstName("testUser");
-        user.setLastName("testUser");
-        user.setEmail("test@email.com");
-        user.setPassword("password");
-        user.setSsn("123456-0000");
-        user.setCreated_at(LocalDateTime.now());
+        UserDTO testUser = userService.create(
+            "test",
+            "test",
+            "test@email.com",
+            "password",
+            "123456-0000"
+        );
 
-        userService.create(user);
-
-        // User --> UserDTO mapping
-        System.out.println(userService.toDto(user));
+        System.out.println(testUser);
 
     }
 }
