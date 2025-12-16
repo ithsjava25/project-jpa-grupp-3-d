@@ -51,7 +51,7 @@ public class CompanyService {
 
     public CompanyDTO toDto(Company company) {
         return CompanyDTO.builder()
-           //  .id(company.getId()) saknas???
+            //  .id(company.getId()) saknas???
             .orgNum(company.getOrgNum())
             .email(company.getEmail())
             .phoneNumber(company.getPhoneNumber())
@@ -75,7 +75,32 @@ public class CompanyService {
         String city,
         String country,
         String phoneNumber) {
-        //TODO: Implement
-        return null;
+
+        Company company = companyRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + id));
+
+        if (orgNum != null && !orgNum.equals(company.getOrgNum())) {
+            if (companyRepository.existsByOrgNum(orgNum)) {
+                throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
+            }
+        }
+
+        if (email != null && !email.equals(company.getEmail())) {
+            if (companyRepository.existsByEmail(email)) {
+                throw new IllegalArgumentException("Company with email " + email + " already exists");
+            }
+        }
+        if (name != null) company.setName(name);
+        if (orgNum != null) company.setOrgNum(orgNum);
+        if (email != null) company.setEmail(email);
+        if (address != null) company.setAddress(address);
+        if (city != null) company.setCity(city);
+        if (country != null) company.setCountry(country);
+        if (phoneNumber != null) company.setPhoneNumber(phoneNumber);
+
+        company.setUpdatedAt(LocalDateTime.now());
+
+        companyRepository.save(company);
+        return toDto(company);
     }
 }
