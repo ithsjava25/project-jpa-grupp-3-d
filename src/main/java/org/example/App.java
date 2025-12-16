@@ -35,7 +35,8 @@ public class App {
 
         userService.create(user);
 
-        System.out.println(user.getId());
+        // User --> UserDTO mapping
+        System.out.println(userService.toDto(user));
 
     }
 }
