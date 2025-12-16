@@ -35,4 +35,13 @@ public class CompanyRepository extends BaseRepository<Company, UUID>{
                 .findFirst()
         );
     }
+
+    public Optional<Company> findByEmail(String email) {
+        return executeRead(em ->
+            em.createQuery("SELECT c FROM Company c WHERE c.email = :email", Company.class)
+                .setParameter("email", email)
+                .getResultStream()
+                .findFirst()
+        );
+    }
 }
