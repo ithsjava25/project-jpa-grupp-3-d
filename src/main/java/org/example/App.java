@@ -1,6 +1,6 @@
 package org.example;
 
-import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
@@ -8,21 +8,31 @@ import org.example.util.JpaUtil;
 
 public class App {
     public static void main(String[] args) {
-        try (EntityManager em = JpaUtil.getEntityManager()) {
 
-            UserRepository userRepository = new UserRepository(em);
-            UserService userService = new UserService(userRepository);
+        // Static EMF for whole application
+        EntityManagerFactory emf = JpaUtil.getEntityManagerFactory();
 
-            User user = new User("testUser");
+        // Repository initialization
+        UserRepository userRepository = new UserRepository(emf);
+        // InvoiceRepository invoiceRepository = new InvoiceRepository(emf);
+        // etc...
 
-            //Operation 1
-            userService.createUser(user);
+        // Service initialization
+        UserService userService = new UserService(userRepository);
+        // InvoiceService invoiceService = new InvoiceService(emf);
 
-            User saved = userService.getUserByUsername("testUser");
-            System.out.println(saved);
 
-            //Operation 2
-            userService.deleteUserById(saved.getId());
-        }
+        // Test User example implementation
+        User user = new User();
+        user.setFirstName("testUser");
+        user.setLastName("testUser");
+        user.setEmail("test@email.com");
+        user.setPassword("password");
+        user.setSsn("123456-0000");
+
+        userService.create(user);
+
+        System.out.println(user.getId());
+
     }
 }
