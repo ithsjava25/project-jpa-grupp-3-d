@@ -33,22 +33,19 @@ public abstract class BaseRepository <T, ID> {
     }
 
     protected <R> R executeRead(Function<EntityManager, R> action) {
-        EntityManager em = emf.createEntityManager();
-        try {
+        try (EntityManager em = emf.createEntityManager()) {
             return action.apply(em);
-        } finally {
-            em.close();
         }
     }
 
-    public void save(T entity) {
-        runInTransaction(em -> {
+    public T save(T entity) {
+        return runInTransaction(em -> {
             if (em.contains(entity)) {
-                em.merge(entity);
+                return em.merge(entity);
             } else {
                 em.persist(entity);
+                return entity;
             }
-            return null;
         });
     }
 
