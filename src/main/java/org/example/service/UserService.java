@@ -13,8 +13,11 @@ public class UserService {
     }
 
     public void create(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new IllegalStateException("Email already in use");
+        }
+        if (userRepository.existsBySsn(user.getSsn())) {
+            throw new IllegalStateException("SSN already in use");
         }
         userRepository.save(user);
     }
