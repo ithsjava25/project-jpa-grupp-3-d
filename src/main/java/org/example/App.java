@@ -1,9 +1,12 @@
 package org.example;
 
 import jakarta.persistence.EntityManagerFactory;
+import org.example.dto.CompanyDTO;
 import org.example.dto.UserDTO;
 import org.example.entity.User;
+import org.example.repository.CompanyRepository;
 import org.example.repository.UserRepository;
+import org.example.service.CompanyService;
 import org.example.service.UserService;
 import org.example.util.JpaUtil;
 
@@ -17,12 +20,11 @@ public class App {
 
         // Repository initialization
         UserRepository userRepository = new UserRepository(emf);
-        // InvoiceRepository invoiceRepository = new InvoiceRepository(emf);
-        // etc...
+        CompanyRepository companyRepository = new CompanyRepository(emf);
 
         // Service initialization
         UserService userService = new UserService(userRepository);
-        // InvoiceService invoiceService = new InvoiceService(emf);
+        CompanyService companyService = new CompanyService(companyRepository);
 
 
         // Test User example implementation
@@ -34,6 +36,21 @@ public class App {
         );
 
         System.out.println(testUser);
+
+
+        // Test Company Example implementation
+
+        CompanyDTO testCompany = companyService.create(
+            "1234567-0000",
+            "billing@test.com",
+            "0701234567",
+            "Test AB",
+            "Testgatan 1",
+            "Gothenburg",
+            "Sweden"
+        );
+
+        System.out.println(testCompany);
 
     }
 }
