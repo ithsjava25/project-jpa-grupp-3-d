@@ -44,7 +44,7 @@ public class CompanyService {
             .updatedAt(LocalDateTime.now())
             .build();
 
-        companyRepository.save(company);
+        companyRepository.create(company);
         return toDto(company);
     }
 
@@ -100,7 +100,7 @@ public class CompanyService {
 
         company.setUpdatedAt(LocalDateTime.now());
 
-        companyRepository.save(company);
+        companyRepository.update(company);
         return toDto(company);
     }
 }
