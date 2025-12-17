@@ -2,6 +2,7 @@ package org.example.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,24 +34,26 @@ public abstract class BaseRepository <T, ID> {
     }
 
     protected <R> R executeRead(Function<EntityManager, R> action) {
-        EntityManager em = emf.createEntityManager();
-        try {
+        try (EntityManager em = emf.createEntityManager()) {
             return action.apply(em);
-        } finally {
-            em.close();
         }
     }
 
-    public void save(T entity) {
-        runInTransaction(em -> {
-            if (em.contains(entity)) {
-                em.merge(entity);
-            } else {
-                em.persist(entity);
-            }
-            return null;
+    // CREATE - För nya entiteter
+    public T create(T entity) {
+        return runInTransaction(em -> {
+            em.persist(entity);
+            return entity;
         });
     }
+
+    // UPDATE - För existerande entiteter
+    public T update(T entity) {
+        return runInTransaction(em -> {
+            return em.merge(entity);
+        });
+    }
+
 
     public void delete(T entity) {
         runInTransaction(em -> {

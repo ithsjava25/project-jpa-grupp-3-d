@@ -39,7 +39,7 @@ public class UserService {
         user.setPassword(PasswordEncoder.hash(password));
         user.setCreatedAt(LocalDateTime.now());
 
-        userRepository.save(user);
+        userRepository.create(user);
         return toDto(user);
     }
 

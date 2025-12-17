@@ -41,7 +41,7 @@ public class UserServiceTest {
         assertEquals(email, userDTO.email());
         assertEquals("test", userDTO.firstName());
 
-        verify(userRepository, times(1)).save(any());
+        verify(userRepository, times(1)).create(any());
     }
 
     @Test
@@ -55,7 +55,7 @@ public class UserServiceTest {
         });
 
         assertEquals("Invalid registration data", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).create(any());
     }
 
     @Test
@@ -69,7 +69,7 @@ public class UserServiceTest {
             "password"
         );
 
-        verify(userRepository).save(argThat(user ->
+        verify(userRepository).create(argThat(user ->
             !user.getPassword().equals("password")
         ));
     }
@@ -108,7 +108,7 @@ public class UserServiceTest {
         });
 
         assertEquals("Invalid registration data", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).create(any());
     }
 
     @Test
@@ -121,6 +121,6 @@ public class UserServiceTest {
         });
 
         assertEquals("Password must be at least 8 characters", exception.getMessage());
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).create(any());
     }
 }
