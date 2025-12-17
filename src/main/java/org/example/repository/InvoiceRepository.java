@@ -3,6 +3,7 @@ package org.example.repository;
 import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.Invoice;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
@@ -26,16 +27,18 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
     }
 
     public void deleteById(UUID id) {
-        runInTransaction(em -> {
-            Invoice invoice = em.find(Invoice.class, id);
+        findById(id).ifPresent(invoice -> {
+            delete(invoice);
+        });
+    }
 
-            if (invoice != null) {
-                em.remove(invoice);
-            } else {
-                System.out.println("Could not find Invoice with id: " + id );
-            }
-
-            return null;
+    public Optional<Invoice> findByInvoiceNumber(String number) {
+        return executeRead(em -> {
+            return em.createQuery(
+                    "SELECT i FROM Invoice i WHERE i.number = :num", Invoice.class)
+                .setParameter("num", number)
+                .getResultStream()
+                .findFirst();
         });
     }
 
