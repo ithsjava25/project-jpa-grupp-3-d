@@ -1,35 +1,46 @@
 package org.example.repository;
 
-import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.User;
 
+import java.util.Optional;
 import java.util.UUID;
 
-public class UserRepository {
-    private final EntityManager em;
+public class UserRepository extends BaseRepository<User, UUID> {
 
-    public UserRepository(EntityManager em) {
-        this.em = em;
+    public UserRepository(EntityManagerFactory emf) {
+        super(emf, User.class);
     }
 
-    public User getUserById(UUID id) {
-        return em.find(User.class, id);
+    public boolean existsByEmail(String email) {
+        return executeRead(em ->
+            !em.createQuery(
+                    "SELECT u FROM User u WHERE u.email = :email", User.class)
+                .setParameter("email", email)
+                .getResultList()
+                .isEmpty()
+        );
     }
 
-    public User getUserByUsername(String username) {
-        return em.find(User.class, username);
+    public boolean existsBySsn(String ssn) {
+        return executeRead(em ->
+            !em.createQuery(
+                    "SELECT u FROM User u WHERE u.ssn = :ssn", User.class)
+                .setParameter("ssn", ssn)
+                .getResultList()
+                .isEmpty()
+        );
     }
 
-
-    public void save(User user) {
-        em.getTransaction().begin();
-        em.persist(user);
-        em.getTransaction().commit();
+    public Optional<User> findByEmail(String email) {
+        return executeRead(em ->
+            em.createQuery(
+                    "SELECT u FROM User u WHERE u.email = :email", User.class)
+                .setParameter("email", email)
+                .getResultList()
+                .stream()
+                .findFirst()
+        );
     }
 
-    public void delete(User user) {
-        em.getTransaction().begin();
-        em.remove(user);
-        em.getTransaction().commit();
-    }
 }
