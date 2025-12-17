@@ -10,7 +10,7 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
     protected InvoiceRepository(EntityManagerFactory emf) {
         super(emf, Invoice.class);
     }
-
+//keep this method just for readability (method is already defined in Baserepository)
     public Invoice createInvoice(Invoice invoice) {
         return runInTransaction(em -> {
             em.persist(invoice);
@@ -18,7 +18,7 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
         });
 
     }
-
+    //keep this method just for readability (method is already defined in Baserepository)
     public Invoice updateInvoice(Invoice invoice) {
         return runInTransaction(em -> {
              return em.merge(invoice);
