@@ -1,6 +1,7 @@
 package org.example.service;
 
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityNotFoundException;
 import org.example.dto.InvoiceDTO;
 import org.example.entity.Invoice;
 import org.example.entity.InvoiceItem;
@@ -32,7 +33,17 @@ public class InvoiceService {
 
     public Optional<InvoiceDTO> getInvoiceById(UUID id) {}
 
-    public void updateStatus(UUID id, InvoiceStatus newStatus) {}
+    public void updateStatus(UUID id, InvoiceStatus newStatus) {
+        Invoice invoice=invoiceRepository.findById(id)
+            .orElseThrow(()->new EntityNotFoundException("Invoice not found"));
+
+        //updates the status of the entity
+        invoice.setStatus(newStatus);
+
+        //saves the update to the database
+        invoiceRepository.update(invoice);
+
+    }
 
     public void deleteInvoice(UUID id) {
         invoiceRepository.deleteById(id);
