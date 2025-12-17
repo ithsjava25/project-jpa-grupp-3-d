@@ -75,25 +75,25 @@ public class UserServiceTest {
     }
 
     @Test
-    void testDeleteUser() {
+    void testDeleteById() {
         UUID userId = UUID.randomUUID();
         User user = new User();
         user.setId(userId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        userService.deleteUser(userId);
+        userService.deleteById(userId);
 
         verify(userRepository, times(1)).delete(user);
     }
 
     @Test
-    void testDeleteUserNotFound() {
+    void testDeleteByIdNotFound() {
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(IllegalStateException.class,
-            () -> userService.deleteUser(userId));
+            () -> userService.deleteById(userId));
 
         assertEquals("User not found", exception.getMessage());
         verify(userRepository, never()).delete(any());

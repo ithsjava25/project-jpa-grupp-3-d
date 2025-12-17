@@ -43,7 +43,7 @@ public class UserService {
         return toDto(user);
     }
 
-    public void deleteUser(UUID userId) {
+    public void deleteById(UUID userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalStateException("User not found"));
         userRepository.delete(user);
