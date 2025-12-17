@@ -2,12 +2,9 @@ package org.example;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.example.dto.UserDTO;
-import org.example.entity.User;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
 import org.example.util.JpaUtil;
-
-import java.time.LocalDateTime;
 
 public class App {
     public static void main(String[] args) {
@@ -26,7 +23,7 @@ public class App {
 
 
         // Test User example implementation
-        UserDTO testUser = userService.create(
+        UserDTO testUser = userService.register(
             "test",
             "test",
             "test@email.com",

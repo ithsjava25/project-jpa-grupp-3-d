@@ -15,7 +15,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public UserDTO create(String firstName, String lastName, String email, String password) {
+    public UserDTO register(String firstName, String lastName, String email, String password) {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalStateException("Email already in use");
         }
