@@ -17,4 +17,27 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
         });
 
     }
+
+    public Invoice updateInvoice(Invoice invoice) {
+        return runInTransaction(em -> {
+             return em.merge(invoice);
+
+        });
+    }
+
+    public void deleteById(UUID id) {
+        runInTransaction(em -> {
+            Invoice invoice = em.find(Invoice.class, id);
+
+            if (invoice != null) {
+                em.remove(invoice);
+            } else {
+                System.out.println("Could not find Invoice with id: " + id );
+            }
+
+            return null;
+        });
+    }
+
+
 }
