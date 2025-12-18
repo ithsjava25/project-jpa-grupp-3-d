@@ -91,7 +91,7 @@ public class ClientService {
             .firstName(client.getFirstName())
             .lastName(client.getLastName())
             .email(client.getEmail())
-            .adress(client.getAddress())
+            .address(client.getAddress())
             .city(client.getCity())
             .country(client.getCountry())
             .phoneNumber(client.getPhoneNumber())

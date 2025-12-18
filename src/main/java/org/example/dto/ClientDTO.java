@@ -12,7 +12,7 @@ public record ClientDTO (
     String firstName,
     String lastName,
     String email,
-    String adress,
+    String address,
     String country,
     String city,
     String phoneNumber,
