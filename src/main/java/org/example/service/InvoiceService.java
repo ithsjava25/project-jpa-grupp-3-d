@@ -2,6 +2,7 @@ package org.example.service;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.example.dto.InvoiceDTO;
 import org.example.dto.InvoiceItemDTO;
 import org.example.entity.Invoice;
@@ -87,6 +88,7 @@ public class InvoiceService {
     }
 
     //method to update items on an existing invoice
+    @Transactional //we want security and atomicity
     public InvoiceDTO updateInvoiceItems(UUID id, Set<InvoiceItemDTO> newItemDtos) {
         Invoice invoice=invoiceRepository.findByIdWithItems(id)
             .orElseThrow(()->new EntityNotFoundException("Invoice not found"));

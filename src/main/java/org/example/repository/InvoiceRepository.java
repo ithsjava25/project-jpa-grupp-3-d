@@ -36,6 +36,7 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
      */
 
     //todo behövs detta om de redan har en relation?
+    //fetches both the invoice and items in one question thanks to join fetch.  also rprevents lazyInitialixationException
     public Optional<Invoice> findByIdWithItems(UUID id) {
         return executeRead(em -> {
             return em.createQuery(
