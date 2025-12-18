@@ -6,8 +6,10 @@ import org.example.dto.UserDTO;
 import org.example.entity.Company;
 import org.example.entity.User;
 import org.example.repository.CompanyRepository;
+import org.example.repository.UserCompanyRepository;
 import org.example.repository.UserRepository;
 import org.example.service.CompanyService;
+import org.example.service.UserCompanyService;
 import org.example.service.UserService;
 import org.example.util.JpaUtil;
 
@@ -24,56 +26,60 @@ public class App {
         // Repository initialization
         UserRepository userRepository = new UserRepository(emf);
         CompanyRepository companyRepository = new CompanyRepository(emf);
+        UserCompanyRepository userCompanyRepository = new UserCompanyRepository(emf);
 
         // Service initialization
         UserService userService = new UserService(userRepository);
         CompanyService companyService = new CompanyService(companyRepository);
+        UserCompanyService userCompanyService = new UserCompanyService(userRepository, userCompanyRepository, companyRepository);
 
 
-        // Test User example implementation
-        UserDTO testUser = userService.register(
-            "test",
-            "test",
-            "test@email.com",
-            "password"
+        System.out.println("=== USER REGISTRATION ===");
+
+        UserDTO user1 = userService.register(
+            "Alice",
+            "Andersson",
+            "alice@test.com",
+            "password123"
         );
 
-        System.out.println(testUser);
+        UserDTO user2 = userService.register(
+            "Bob",
+            "Berg",
+            "bob@test.com",
+            "password123"
+        );
 
+        System.out.println("Created user: " + user1);
+        System.out.println("Created user: " + user2);
 
-        // Test Company Example implementation
-        // CREATE
-        CompanyDTO testCompany = companyService.create(
-            "1234567-0000",
-            "billing@test.com",
-            "0701234567",
-            "Test AB",
-            "Testgatan 1",
-            "Gothenburg",
+        System.out.println("\n=== COMPANY CREATION ===");
+
+        CompanyDTO company = companyService.create(
+            "556677-8899",
+            "info@acme.se",
+            "0701112233",
+            "Acme AB",
+            "Main Street 1",
+            "Stockholm",
             "Sweden"
         );
 
+        System.out.println("Created company: " + company);
 
-        System.out.println("✅ Created: " + testCompany);
+        UUID companyId = company.id();
+        UUID user1Id = user1.id();
+        UUID user2Id = user2.id();
 
+        System.out.println("\n=== ADD USERS TO COMPANY ===");
 
-        // UPDATE
-        CompanyDTO updated = companyService.update(
-            testCompany.id(),
-            "Updated Name AB",
-            null,
-            "updated@test.com",
-            "New Address 2",
-            "UpdatedCity",
-            null,
-            "777-7777777"
-        );
-        System.out.println("✅ Updated: " + updated);
+        userCompanyService.addUserToCompany(companyId, user1Id);
+        userCompanyService.addUserToCompany(companyId, user2Id);
 
-        // DELETE
-        companyService.deleteCompany(testCompany.id());
-        System.out.println("✅ Deleted company with ID: " + testCompany.id());
+        System.out.println("Users added to company");
 
-        emf.close();
+        System.out.println("\n=== REMOVE USER FROM COMPANY ===");
+
+        userCompanyService.deleteUserFromCompany(companyId, user2Id);
     }
 }

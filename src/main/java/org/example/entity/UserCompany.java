@@ -6,9 +6,7 @@ import lombok.*;
 @Entity
 @Table(name = "user_company")
 @Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode
 public class UserCompany {
 
@@ -24,4 +22,10 @@ public class UserCompany {
     @MapsId("companyId")
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
+
+    public UserCompany(User user, Company company) {
+        this.id = new UserCompanyId(user.getId(), company.getId());
+        this.user = user;
+        this.company = company;
+    }
 }
