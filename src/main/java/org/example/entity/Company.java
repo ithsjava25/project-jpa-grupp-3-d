@@ -1,4 +1,5 @@
 package org.example.entity;
+import lombok.Builder.Default;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,10 +15,12 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Builder
 public class Company {
 
     @Id
+    @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(nullable = false, updatable = false)
     private UUID id;
@@ -43,8 +46,10 @@ public class Company {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Default
     private Set<Client> clients = new HashSet<>();
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Default
     private Set<Invoice> invoices = new HashSet<>();
 }

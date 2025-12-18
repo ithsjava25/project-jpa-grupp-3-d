@@ -18,11 +18,11 @@ public abstract class BaseRepository <T, ID> {
         this.entityClass = entityClass;
     }
 
-    protected <R> R runInTransaction(Function<EntityManager, R> action) {
+    protected <R> R runInTransaction(Function<EntityManager, R> dbOperation) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
-            R result = action.apply(em);
+            R result = dbOperation.apply(em);
             em.getTransaction().commit();
             return result;
         } catch (Exception e) {
@@ -39,7 +39,6 @@ public abstract class BaseRepository <T, ID> {
         }
     }
 
-    // CREATE - För nya entiteter
     public T create(T entity) {
         return runInTransaction(em -> {
             em.persist(entity);
@@ -47,13 +46,11 @@ public abstract class BaseRepository <T, ID> {
         });
     }
 
-    // UPDATE - För existerande entiteter
     public T update(T entity) {
         return runInTransaction(em -> {
             return em.merge(entity);
         });
     }
-
 
     public void delete(T entity) {
         runInTransaction(em -> {

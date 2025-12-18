@@ -31,7 +31,6 @@ public class UserService {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
 
-
         User user = new User();
         user.setFirstName(firstName);
         user.setLastName(lastName);
