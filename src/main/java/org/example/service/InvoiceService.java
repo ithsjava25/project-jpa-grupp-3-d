@@ -6,6 +6,7 @@ import org.example.dto.InvoiceItemDTO;
 import org.example.entity.Invoice;
 import org.example.entity.InvoiceItem;
 import org.example.entity.InvoiceStatus;
+import org.example.repository.CompanyRepository;
 import org.example.repository.InvoiceItemRepository;
 import org.example.repository.InvoiceRepository;
 import java.math.BigDecimal;
@@ -22,15 +23,15 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
 
     //fields to be able to connect invoices to clients and companies
-    private final ClientRepository clientRepository;
+    //private final ClientRepository clientRepository;
     private final CompanyRepository companyRepository;
 
 
     public InvoiceService(InvoiceItemRepository invoiceItemRepository, InvoiceRepository invoiceRepository,
-                          ClientRepository clientRepository,  CompanyRepository companyrepository) {
+                            CompanyRepository companyrepository) {
         this.invoiceItemRepository = invoiceItemRepository;
         this.invoiceRepository = invoiceRepository;
-        this.clientRepository = clientRepository;
+       // this.clientRepository = clientRepository;
         this.companyRepository = companyrepository;
     }
 //user sends us a draftDTO with no ID no created_at and total:amount not confirmed
@@ -79,17 +80,13 @@ public class InvoiceService {
     }
 
     public void deleteById(UUID id) {
-        findById(id).ifPresent(invoice -> {
-            delete(invoice);
-        });
+        invoiceRepository.findById(id).ifPresent(invoiceRepository::delete);
     }
 
-    public void deleteInvoice(UUID id) {
-        invoiceRepository.deleteById(id);
-    }
+
 
     //method to update items on an existing invoice
-    @Transactional //we want security and atomicity
+
     public InvoiceDTO updateInvoiceItems(UUID id, Set<InvoiceItemDTO> newItemDtos) {
         Invoice invoice=invoiceRepository.findByIdWithItems(id)
             .orElseThrow(()->new EntityNotFoundException("Invoice not found"));
@@ -125,10 +122,10 @@ public class InvoiceService {
         invoice.setStatus(InvoiceStatus.CREATED);
 
 // connection to client
-        if (dto.clientId() != null) {
-            invoice.setClient(clientRepository.findById(dto.clientId())
-                .orElseThrow(() -> new EntityNotFoundException("Client not found")));
-        }
+//        if (dto.clientId() != null) {
+//            invoice.setClient(clientRepository.findById(dto.clientId())
+//                .orElseThrow(() -> new EntityNotFoundException("Client not found")));
+//        }
 
         //connection to Company
         if (dto.companyId() != null) {
