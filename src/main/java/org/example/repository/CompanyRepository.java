@@ -12,6 +12,14 @@ public class CompanyRepository extends BaseRepository<Company, UUID>{
         super(emf, Company.class);
     }
 
+    public boolean existsByOrgNum(String orgNum) {
+        return executeRead(em ->
+            em.createQuery("SELECT COUNT(c) FROM Company c WHERE c.orgNum = :orgNum", Long.class)
+                .setParameter("orgNum", orgNum)
+                .getSingleResult() > 0
+        );
+    }
+
     public Optional<Company> findByOrgNum(String orgNum) {
         return executeRead(em ->
             em.createQuery("SELECT c FROM Company c WHERE c.orgNum = :orgNum", Company.class)
@@ -33,7 +41,7 @@ public class CompanyRepository extends BaseRepository<Company, UUID>{
     public List<Company> findByName(String name) {
         return executeRead(em ->
             em.createQuery("SELECT c FROM Company c WHERE c.name LIKE :name", Company.class)
-                .setParameter("name", "%" + name.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%")
+                .setParameter("name", "%" + name + "%")
                 .getResultList()
         );
     }

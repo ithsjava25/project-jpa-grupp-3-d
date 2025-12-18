@@ -23,7 +23,7 @@ public class CompanyService {
         String city,
         String country) {
 
-        if (companyRepository.existsByOrgNum(orgNum)) {
+        if (companyRepository.findByOrgNum(orgNum)) {
             throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
         }
 
