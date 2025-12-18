@@ -1,20 +1,20 @@
 package org.example;
 
 import jakarta.persistence.EntityManagerFactory;
+import org.example.dto.ClientDTO;
 import org.example.dto.CompanyDTO;
 import org.example.dto.UserDTO;
-import org.example.entity.Company;
-import org.example.entity.User;
+import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.UserCompanyRepository;
 import org.example.repository.UserRepository;
+import org.example.service.ClientService;
 import org.example.service.CompanyService;
 import org.example.service.UserCompanyService;
 import org.example.service.UserService;
 import org.example.util.JpaUtil;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+
 import java.util.UUID;
 
 public class App {
@@ -27,11 +27,13 @@ public class App {
         UserRepository userRepository = new UserRepository(emf);
         CompanyRepository companyRepository = new CompanyRepository(emf);
         UserCompanyRepository userCompanyRepository = new UserCompanyRepository(emf);
+        ClientRepository clientRepository = new ClientRepository(emf);
 
         // Service initialization
         UserService userService = new UserService(userRepository);
         CompanyService companyService = new CompanyService(companyRepository);
         UserCompanyService userCompanyService = new UserCompanyService(userRepository, userCompanyRepository, companyRepository);
+        ClientService clientService = new ClientService(clientRepository, companyRepository);
 
 
         System.out.println("=== USER REGISTRATION ===");
@@ -81,5 +83,53 @@ public class App {
         System.out.println("\n=== REMOVE USER FROM COMPANY ===");
 
         userCompanyService.deleteUserFromCompany(companyId, user2Id);
+
+        System.out.println("\n=== CLIENT CREATION ===");
+
+        ClientDTO client1 = clientService.createClient(
+            companyId,
+            "Eva",
+            "Ek",
+            "eva.client@test.com",
+            "Client Street 5",
+            "Stockholm",
+            "Sweden",
+            "07012345678"
+        );
+
+        ClientDTO client2 = clientService.createClient(
+            companyId,
+            "Lars",
+            "Larsson",
+            "lars.client@test.com",
+            "Client Road 10",
+            "Gothenburg",
+            "Sweden",
+            "07012345678"
+        );
+
+        System.out.println("Created client: " + client1);
+        System.out.println("Created client: " + client2);
+
+        System.out.println("\n=== CLIENT UPDATE ===");
+
+        ClientDTO updatedClient = clientService.update(
+            client1.id(),
+            "Eva",
+            "Ekström",
+            "eva.updated@test.com",
+            "Updated Street 99",
+            "Uppsala",
+            "Sweden",
+            "070"
+        );
+
+        System.out.println("Updated client: " + updatedClient);
+
+
+        System.out.println("\n=== DELETE CLIENT ===");
+        clientService.deleteClient(client1.id());
+
+
     }
 }
