@@ -58,7 +58,6 @@ public class CompanyService {
             .build();
     }
 
-
     public CompanyDTO update(
         UUID id,
         String name,
