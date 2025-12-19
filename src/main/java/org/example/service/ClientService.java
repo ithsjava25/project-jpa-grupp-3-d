@@ -1,5 +1,6 @@
 package org.example.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.example.dto.ClientDTO;
 import org.example.entity.Client;
 import org.example.entity.Company;
@@ -36,6 +37,12 @@ public class ClientService {
         if (!isClientOwnedByCompany(clientId, companyId)) {
             throw new SecurityException("Client " + clientId + " does not belong to company " + companyId);
         }
+    }
+
+
+    public Client getClientEntity(UUID clientId) {
+        return clientRepository.findById(clientId)
+            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
     }
 
     public ClientDTO createClient(UUID companyId,
