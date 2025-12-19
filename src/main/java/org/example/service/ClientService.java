@@ -25,6 +25,19 @@ public class ClientService {
             .toList();
     }
 
+    public boolean isClientOwnedByCompany(UUID clientId, UUID companyId) {
+        return clientRepository.findById(clientId)
+            .map(client -> client.getCompany().getId().equals(companyId))
+            .orElse(false);
+    }
+
+
+    public void validateClientAccess(UUID clientId, UUID companyId) {
+        if (!isClientOwnedByCompany(clientId, companyId)) {
+            throw new SecurityException("Client " + clientId + " does not belong to company " + companyId);
+        }
+    }
+
     public ClientDTO createClient(UUID companyId,
                                    String firstName,
                                    String lastName,
@@ -60,6 +73,8 @@ public class ClientService {
 
         clientRepository.delete(client);
     }
+
+
 
 
 
