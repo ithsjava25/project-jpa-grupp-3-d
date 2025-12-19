@@ -2,11 +2,11 @@ package org.example.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+
 
 public abstract class BaseRepository <T, ID> {
 
@@ -54,7 +54,20 @@ public abstract class BaseRepository <T, ID> {
 
     public void delete(T entity) {
         runInTransaction(em -> {
-            em.remove(em.contains(entity) ? entity : em.merge(entity));
+            if (em.contains(entity)) {
+                em.remove(entity);
+            } else {
+                // Entity is detached, fetch it by ID within the transaction
+                Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
+                if (id == null) {
+                    throw new IllegalArgumentException("Cannot delete entity without an ID");
+                }
+                T managedEntity = em.find(entityClass, id);
+                if (managedEntity == null) {
+                    throw new IllegalArgumentException(entityClass.getSimpleName() + " not found with id: " + id);
+                }
+                em.remove(managedEntity);
+            }
             return null;
         });
     }

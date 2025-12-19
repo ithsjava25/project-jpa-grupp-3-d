@@ -4,16 +4,15 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "user_company")
+@Table(name = "company_user")
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @EqualsAndHashCode
-public class UserCompany {
+public class CompanyUser {
 
     @EmbeddedId
-    private UserCompanyId id;
+    private CompanyUserId id;
 
     @ManyToOne(optional = false)
     @MapsId("userId")
@@ -24,4 +23,10 @@ public class UserCompany {
     @MapsId("companyId")
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
+
+    public CompanyUser(User user, Company company) {
+        this.id = new CompanyUserId(user.getId(), company.getId());
+        this.user = user;
+        this.company = company;
+    }
 }

@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,7 +42,7 @@ public class Invoice {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<InvoiceItem> items;
+    private Set<InvoiceItem> items = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status;

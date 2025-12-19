@@ -5,7 +5,6 @@ import org.example.dto.UserDTO;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class UserService {
@@ -36,7 +35,6 @@ public class UserService {
         user.setLastName(lastName);
         user.setEmail(email);
         user.setPassword(PasswordEncoder.hash(password));
-        user.setCreatedAt(LocalDateTime.now());
 
         userRepository.create(user);
         return toDto(user);
@@ -44,7 +42,7 @@ public class UserService {
 
     public void deleteUser(UUID userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalStateException("User not found"));
+            .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
         userRepository.delete(user);
     }
 
@@ -54,6 +52,8 @@ public class UserService {
             .firstName(user.getFirstName())
             .lastName(user.getLastName())
             .email(user.getEmail())
+            .createdAt(user.getCreatedAt())
+            .updatedAt(user.getUpdatedAt())
             .build();
     }
 }

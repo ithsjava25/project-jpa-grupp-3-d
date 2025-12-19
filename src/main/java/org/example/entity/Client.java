@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Table(name = "clients")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,12 +29,13 @@ public class Client {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String email;
 
     private String address;
     private String city;
     private String country;
+    private String phoneNumber;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -41,4 +43,14 @@ public class Client {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
