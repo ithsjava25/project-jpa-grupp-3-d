@@ -24,17 +24,17 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     //fields to be able to connect invoices to clients and companies
-    private final ClientRepository clientRepository;
-    private final CompanyRepository companyRepository;
+    private final CompanyService companyService;
     private final CompanyUserService companyUserService;
     private final ClientService clientService;
 
 
-    public InvoiceService( ClientService clientService, CompanyUserService companyUserService, ClientRepository clientRepository, InvoiceRepository invoiceRepository,
-                            CompanyRepository companyrepository) {
+    public InvoiceService( ClientService clientService,
+                           CompanyUserService companyUserService,
+                           InvoiceRepository invoiceRepository,
+                            CompanyService companyService) {
         this.invoiceRepository = invoiceRepository;
-        this.clientRepository = clientRepository;
-        this.companyRepository = companyrepository;
+        this.companyService=companyService;
         this.companyUserService = companyUserService;
         this.clientService = clientService;
     }
@@ -133,9 +133,10 @@ public class InvoiceService {
             item.setQuantity(itemDto.quantity());
             item.setUnitPrice(itemDto.unitPrice());
             item.setInvoice(invoice); // Viktigt för @ManyToOne-kopplingen
-
             invoice.getItems().add(item);
         }
+
+        invoice.setAmount(calculateTotal(invoice.getItems()));
         //saves the complete Invoice
         Invoice updatedInvoice=invoiceRepository.update(invoice);
 
@@ -196,15 +197,21 @@ public class InvoiceService {
         invoice.setStatus(InvoiceStatus.CREATED);
 
 
-        if (dto.clientId() != null) {
-            invoice.setClient(clientRepository.findById(dto.clientId())
-                .orElseThrow(() -> new EntityNotFoundException("Client not found")));
+        if (dto.clientId() != null ) {
+            invoice.setClient(clientService.getClientEntity(dto.clientId()));
         }
 
         //connection to Company
         if (dto.companyId() != null) {
-            invoice.setCompany(companyRepository.findById(dto.companyId())
-                .orElseThrow(() -> new EntityNotFoundException("Company not found")));
+            invoice.setCompany(companyService.getCompanyEntity(dto.companyId()));
+        }
+
+        //handling of missing values to avoid SQL Constraint Violation
+        if (dto.amount() != null) {
+            invoice.setAmount(dto.amount());
+        } else {
+            // An invoice cannot be null i DB, sets 0.00 as standard
+            invoice.setAmount(BigDecimal.ZERO);
         }
 
         return invoice;
