@@ -3,13 +3,16 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.example.dto.InvoiceDTO;
 import org.example.dto.InvoiceItemDTO;
+import org.example.entity.Client;
 import org.example.entity.Invoice;
 import org.example.entity.InvoiceItem;
 import org.example.entity.InvoiceStatus;
+import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.InvoiceItemRepository;
 import org.example.repository.InvoiceRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -23,16 +26,20 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
 
     //fields to be able to connect invoices to clients and companies
-    //private final ClientRepository clientRepository;
+    private final ClientRepository clientRepository;
     private final CompanyRepository companyRepository;
+    private final CompanyUserService companyUserService;
+    private final ClientService clientService;
 
 
-    public InvoiceService(InvoiceItemRepository invoiceItemRepository, InvoiceRepository invoiceRepository,
+    public InvoiceService(InvoiceItemRepository invoiceItemRepository, ClientService clientService, CompanyUserService companyUserService, ClientRepository clientRepository, InvoiceRepository invoiceRepository,
                             CompanyRepository companyrepository) {
         this.invoiceItemRepository = invoiceItemRepository;
         this.invoiceRepository = invoiceRepository;
-       // this.clientRepository = clientRepository;
+        this.clientRepository = clientRepository;
         this.companyRepository = companyrepository;
+        this.companyUserService = companyUserService;
+        this.clientService = clientService;
     }
 //user sends us a draftDTO with no ID no created_at and total:amount not confirmed
     // returns a DTO to the frontend:
@@ -57,19 +64,28 @@ public class InvoiceService {
 
 
 
-// method to find an invoice by ID
+// method to find an invoice by ID // TODO: validation
     //if invoice is found, it gets mapped from entity to DTO.
     // the user receives the actual total amount since calculate total is integrated here also
-    public Optional<InvoiceDTO> getInvoiceById(UUID id) {
+    public Optional<InvoiceDTO> getInvoiceById(UUID id, UUID userId, UUID companyId) {
+
+        validateUserAccess(userId, companyId);
+
         return invoiceRepository.findByIdWithItems(id) //fetches the invoice and items in one question
             .map(this::mapToDTO);
     }
 
 
 
-    public void updateStatus(UUID id, InvoiceStatus newStatus) {
+    public void updateStatus(UUID id, InvoiceStatus newStatus, UUID userId, UUID companyId) {
+        validateUserAccess(userId, companyId);
+
         Invoice invoice=invoiceRepository.findById(id)
             .orElseThrow(()->new EntityNotFoundException("Invoice not found"));
+
+        if (!invoice.getCompany().getId().equals(companyId)) {
+            throw new SecurityException("Unauthorized access to this invoice.");
+        }
 
         //updates the status of the entity
         invoice.setStatus(newStatus);
@@ -79,17 +95,29 @@ public class InvoiceService {
 
     }
 
-    public void deleteById(UUID id) {
-        invoiceRepository.findById(id).ifPresent(invoiceRepository::delete);
+    public void deleteById(UUID id, UUID userId, UUID companyId) {
+        validateUserAccess(userId, companyId);
+
+        invoiceRepository.findById(id).ifPresent(invoice -> {
+            if (!invoice.getCompany().getId().equals(companyId)) {
+                throw new SecurityException("Unauthorized");
+            }
+            invoiceRepository.delete(invoice);
+        });
+
     }
 
 
-
     //method to update items on an existing invoice
+    public InvoiceDTO updateInvoiceItems(UUID id, Set<InvoiceItemDTO> newItemDtos, UUID userId, UUID companyId) {
+        validateUserAccess(userId, companyId);
 
-    public InvoiceDTO updateInvoiceItems(UUID id, Set<InvoiceItemDTO> newItemDtos) {
         Invoice invoice=invoiceRepository.findByIdWithItems(id)
             .orElseThrow(()->new EntityNotFoundException("Invoice not found"));
+
+        if (!invoice.getCompany().getId().equals(companyId)) {
+            throw new SecurityException("Unauthorized");
+        }
 
         //clears the current set to handle deletions (orphan removal handles SQL)
         invoice.getItems().clear();
@@ -102,14 +130,55 @@ public class InvoiceService {
             item.setInvoice(invoice); // Viktigt för @ManyToOne-kopplingen
 
             invoice.getItems().add(item);
-
-
         }
         //saves the complete Invoice
         Invoice updatedInvoice=invoiceRepository.update(invoice);
 
         //returns the updated invoice as DTO
         return mapToDTO(updatedInvoice);
+    }
+
+    public List<InvoiceDTO> getInvoicesByClientForCompany(UUID clientId, UUID companyId, UUID userId) {
+        //check if user is connected to the company
+        validateUserAccess(userId, companyId);
+
+        clientService.validateClientAccess(clientId, companyId);
+
+        return invoiceRepository.findAllByClientId(clientId).stream()
+            .map(this::mapToDTO)
+            .toList();
+    }
+
+
+    public List<InvoiceDTO> getCompanyInvoices(UUID userId, UUID companyId) {
+        validateUserAccess(userId, companyId);
+
+        return invoiceRepository.findAllByCompanyId(companyId).stream()
+            .map(this::mapToDTO)
+            .toList();
+    }
+
+
+    public List<InvoiceDTO> getInvoicesByStatusForCompany(UUID userId, UUID companyId, InvoiceStatus status) {
+        validateUserAccess(userId, companyId);
+
+        return invoiceRepository.findAllByStatusAndCompany(status, companyId).stream()
+            .map(this::mapToDTO)
+            .toList();
+    }
+
+    private void validateUserAccess(UUID userId, UUID companyId) {
+        if (!companyUserService.isUserAssociatedWithCompany(userId, companyId)) {
+            throw new SecurityException("User " + userId + " is not authorized to access company " + companyId);
+        }
+    }
+
+
+    private BigDecimal calculateTotal(Set<InvoiceItem> items) {
+        if (items == null) return BigDecimal.ZERO;
+        return items.stream()
+            .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
 
@@ -121,11 +190,11 @@ public class InvoiceService {
         invoice.setDueDate(dto.dueDate());
         invoice.setStatus(InvoiceStatus.CREATED);
 
-// connection to client
-//        if (dto.clientId() != null) {
-//            invoice.setClient(clientRepository.findById(dto.clientId())
-//                .orElseThrow(() -> new EntityNotFoundException("Client not found")));
-//        }
+
+        if (dto.clientId() != null) {
+            invoice.setClient(clientRepository.findById(dto.clientId())
+                .orElseThrow(() -> new EntityNotFoundException("Client not found")));
+        }
 
         //connection to Company
         if (dto.companyId() != null) {
@@ -135,6 +204,7 @@ public class InvoiceService {
 
         return invoice;
     }
+
 
 
     //method that converts data from entity to DTO (easy for user)
@@ -149,17 +219,6 @@ public class InvoiceService {
             .amount(calculateTotal(invoice.getItems()))
             .build();
     }
-
-    private BigDecimal calculateTotal(Set<InvoiceItem> items) {
-        if (items == null) return BigDecimal.ZERO;
-        return items.stream()
-            .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-
-
-
 
 
 
