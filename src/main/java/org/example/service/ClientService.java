@@ -6,7 +6,7 @@ import org.example.entity.Company;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class ClientService {
@@ -16,6 +16,13 @@ public class ClientService {
     public ClientService(ClientRepository clientRepository, CompanyRepository companyRepository) {
         this.clientRepository = clientRepository;
         this.companyRepository = companyRepository;
+    }
+
+    public List<ClientDTO> getClientsByCompany(UUID companyId) {
+        List<Client> clients = clientRepository.findByCompanyId(companyId);
+        return clients.stream()
+            .map(this::toDto)
+            .toList();
     }
 
     public ClientDTO createClient(UUID companyId,
@@ -40,8 +47,6 @@ public class ClientService {
         client.setCity(city);
         client.setCountry(country);
         client.setPhoneNumber(phoneNumber);
-        client.setCreatedAt(LocalDateTime.now());
-        client.setUpdatedAt(LocalDateTime.now());
 
         clientRepository.create(client);
 
@@ -53,9 +58,7 @@ public class ClientService {
         Client client = clientRepository.findById(clientId)
             .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
 
-        Company company = client.getCompany();
-        company.getClients().remove(client);
-        companyRepository.update(company);
+        clientRepository.delete(client);
     }
 
 
@@ -93,7 +96,7 @@ public class ClientService {
             .firstName(client.getFirstName())
             .lastName(client.getLastName())
             .email(client.getEmail())
-            .adress(client.getAddress())
+            .address(client.getAddress())
             .city(client.getCity())
             .country(client.getCountry())
             .phoneNumber(client.getPhoneNumber())

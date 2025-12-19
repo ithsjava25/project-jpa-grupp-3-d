@@ -14,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class UserCompanyId implements Serializable {
+public class CompanyUserId implements Serializable {
 
     private UUID userId;
     private UUID companyId;

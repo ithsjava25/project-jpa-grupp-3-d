@@ -2,19 +2,27 @@ package org.example.service;
 
 import org.example.dto.CompanyDTO;
 import org.example.entity.Company;
+import org.example.entity.CompanyUser;
+import org.example.entity.User;
 import org.example.repository.CompanyRepository;
+import org.example.repository.CompanyUserRepository;
+import org.example.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class CompanyService {
     private final CompanyRepository companyRepository;
+    private final CompanyUserRepository companyUserRepository;
+    private final UserRepository userRepository;
 
-    public CompanyService(CompanyRepository companyRepository) {
+    public CompanyService(CompanyRepository companyRepository, CompanyUserRepository companyUserRepository, UserRepository userRepository) {
         this.companyRepository = companyRepository;
+        this.companyUserRepository = companyUserRepository;
+        this.userRepository = userRepository;
     }
 
     public CompanyDTO create(
+        UUID creatorUserId,
         String orgNum,
         String email,
         String phoneNumber,
@@ -22,6 +30,10 @@ public class CompanyService {
         String address,
         String city,
         String country) {
+
+        // Validate creator exists
+        User creator = userRepository.findById(creatorUserId)
+            .orElseThrow(() -> new IllegalArgumentException("Creator user not found with id: " + creatorUserId));
 
         if (companyRepository.existsByOrgNum(orgNum)) {
             throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
@@ -35,11 +47,14 @@ public class CompanyService {
             .address(address)
             .city(city)
             .country(country)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
             .build();
 
         companyRepository.create(company);
+
+        // Automatically associate creator with the company
+        CompanyUser creatorAssociation = new CompanyUser(creator, company);
+        companyUserRepository.create(creatorAssociation);
+
         return toDto(company);
     }
 
@@ -84,8 +99,6 @@ public class CompanyService {
         if (city != null) company.setCity(city);
         if (country != null) company.setCountry(country);
         if (phoneNumber != null) company.setPhoneNumber(phoneNumber);
-
-        company.setUpdatedAt(LocalDateTime.now());
 
         companyRepository.update(company);
         return toDto(company);

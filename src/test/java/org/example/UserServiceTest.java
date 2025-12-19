@@ -92,10 +92,10 @@ public class UserServiceTest {
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(IllegalStateException.class,
+        Exception exception = assertThrows(IllegalArgumentException.class,
             () -> userService.deleteUser(userId));
 
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("User not found with id: " + userId, exception.getMessage());
         verify(userRepository, never()).delete(any());
     }
 

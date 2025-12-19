@@ -22,16 +22,6 @@ public class UserRepository extends BaseRepository<User, UUID> {
         );
     }
 
-    public boolean existsBySsn(String ssn) {
-        return executeRead(em ->
-            !em.createQuery(
-                    "SELECT u FROM User u WHERE u.ssn = :ssn", User.class)
-                .setParameter("ssn", ssn)
-                .getResultList()
-                .isEmpty()
-        );
-    }
-
     public Optional<User> findByEmail(String email) {
         return executeRead(em ->
             em.createQuery(
