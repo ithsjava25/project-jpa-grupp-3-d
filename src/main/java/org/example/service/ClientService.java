@@ -6,7 +6,6 @@ import org.example.entity.Company;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ClientService {
@@ -40,8 +39,6 @@ public class ClientService {
         client.setCity(city);
         client.setCountry(country);
         client.setPhoneNumber(phoneNumber);
-        client.setCreatedAt(LocalDateTime.now());
-        client.setUpdatedAt(LocalDateTime.now());
 
         clientRepository.create(client);
 
@@ -79,7 +76,6 @@ public class ClientService {
         if (city != null) client.setCity(city);
         if (country != null) client.setCountry(country);
         if (phoneNumber != null) client.setPhoneNumber(phoneNumber);
-        client.setUpdatedAt(LocalDateTime.now());
 
         clientRepository.update(client);
         return toDto(client);

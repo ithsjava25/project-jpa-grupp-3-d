@@ -4,7 +4,6 @@ import org.example.dto.CompanyDTO;
 import org.example.entity.Company;
 import org.example.repository.CompanyRepository;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class CompanyService {
@@ -35,8 +34,6 @@ public class CompanyService {
             .address(address)
             .city(city)
             .country(country)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
             .build();
 
         companyRepository.create(company);
@@ -84,8 +81,6 @@ public class CompanyService {
         if (city != null) company.setCity(city);
         if (country != null) company.setCountry(country);
         if (phoneNumber != null) company.setPhoneNumber(phoneNumber);
-
-        company.setUpdatedAt(LocalDateTime.now());
 
         companyRepository.update(company);
         return toDto(company);

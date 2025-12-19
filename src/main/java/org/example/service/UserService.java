@@ -5,7 +5,6 @@ import org.example.dto.UserDTO;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class UserService {
@@ -36,8 +35,6 @@ public class UserService {
         user.setLastName(lastName);
         user.setEmail(email);
         user.setPassword(PasswordEncoder.hash(password));
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.create(user);
         return toDto(user);
