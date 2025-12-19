@@ -762,6 +762,12 @@ public class CliApp {
             }
 
             UUID userId = companyUsers.get(choice - 1).getUser().getId();
+            if (userId.equals(currentUserId)) {
+                System.out.println("✗ Cannot remove yourself from the current company.");
+                System.out.println("  Switch to another company first, or have another user remove you.");
+                return;
+                }
+
             companyUserService.deleteUserFromCompany(currentCompanyId, userId);
             System.out.println("✓ User removed from company successfully!");
         } catch (Exception e) {
