@@ -1,5 +1,6 @@
 package org.example.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.auth.PasswordEncoder;
 import org.example.dto.UserDTO;
 import org.example.entity.User;
@@ -7,6 +8,8 @@ import org.example.repository.UserRepository;
 
 import java.util.UUID;
 
+
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -16,17 +19,22 @@ public class UserService {
     }
 
     public UserDTO register(String firstName, String lastName, String email, String password) {
+
+        log.debug("User registration started with email: {}", email);
+
         boolean emailValid = email != null && email.matches(
             "^[A-Za-z0-9._%+-]+@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*\\.[A-Za-z]{2,}$"
         );
         boolean passwordValid = password != null && password.length() >= 8;
 
         if (!emailValid || userRepository.existsByEmail(email)) {
+            log.error("Email validation error");
             // Generic error message to prevent user enumeration
             throw new IllegalArgumentException("Invalid registration data");
         }
 
         if (!passwordValid) {
+            log.error("Password used while registering account is not valid.");
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
 
@@ -36,7 +44,11 @@ public class UserService {
         user.setEmail(email);
         user.setPassword(PasswordEncoder.hash(password));
 
+        log.debug("User entity created successfully.");
+
         userRepository.create(user);
+
+        log.info("User registered successfully.");
         return toDto(user);
     }
 
