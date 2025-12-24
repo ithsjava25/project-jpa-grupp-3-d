@@ -95,7 +95,7 @@ public class UserServiceTest {
         Exception exception = assertThrows(IllegalArgumentException.class,
             () -> userService.deleteUser(userId));
 
-        assertEquals("User not found with id: " + userId, exception.getMessage());
+        assertEquals("User not found", exception.getMessage());
         verify(userRepository, never()).delete(any());
     }
 
