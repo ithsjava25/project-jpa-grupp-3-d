@@ -5,6 +5,7 @@ import org.example.auth.PasswordEncoder;
 import org.example.dto.UserDTO;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
+import org.example.util.LogUtil;
 
 import java.util.UUID;
 
@@ -20,21 +21,28 @@ public class UserService {
 
     public UserDTO register(String firstName, String lastName, String email, String password) {
 
-        log.debug("User registration started with email: {}", email);
+        log.debug("User registration started for email={}", LogUtil.maskEmail(email));
 
         boolean emailValid = email != null && email.matches(
             "^[A-Za-z0-9._%+-]+@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*\\.[A-Za-z]{2,}$"
         );
         boolean passwordValid = password != null && password.length() >= 8;
 
-        if (!emailValid || userRepository.existsByEmail(email)) {
-            log.error("Email validation error");
-            // Generic error message to prevent user enumeration
+        if (!emailValid) {
+            log.debug("Registration failed: invalid email format for email={}", LogUtil.maskEmail(email));
+            log.warn("User registration failed due to invalid input");
+            throw new IllegalArgumentException("Invalid registration data");
+        }
+
+        if (userRepository.existsByEmail(email)) {
+            log.debug("Registration failed: email already exists for email={}", LogUtil.maskEmail(email));
+            log.warn("User registration failed due to invalid input");
             throw new IllegalArgumentException("Invalid registration data");
         }
 
         if (!passwordValid) {
-            log.error("Password used while registering account is not valid.");
+            log.debug("Registration failed: password validation failed");
+            log.warn("User registration failed due to invalid input");
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
 
@@ -44,18 +52,25 @@ public class UserService {
         user.setEmail(email);
         user.setPassword(PasswordEncoder.hash(password));
 
-        log.debug("User entity created successfully.");
-
         userRepository.create(user);
 
-        log.info("User registered successfully.");
+        log.info("User registered successfully with id={}", user.getId());
         return toDto(user);
     }
 
+
     public void deleteUser(UUID userId) {
+
+        log.debug("User deletion requested for userId={}", userId);
+
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+            .orElseThrow(() -> {
+                log.warn("User deletion failed: user not found for userId={}", userId);
+                return new IllegalArgumentException("User not found");
+            });
+
         userRepository.delete(user);
+        log.info("User deleted successfully with userId={}", userId);
     }
 
     public UserDTO toDto(User user) {

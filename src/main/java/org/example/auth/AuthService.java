@@ -5,6 +5,7 @@ import org.example.dto.UserDTO;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
+import org.example.util.LogUtil;
 
 
 @Slf4j
@@ -19,12 +20,12 @@ public class AuthService {
 
     public UserDTO authenticate(String email, String password) {
 
-        log.debug("Authentication attempt for email: {}", email);
+        log.debug("Authentication attempt for email: {}", LogUtil.maskEmail(email));
 
         User user = userRepository.findByEmail(email)
 
             .orElseThrow(() -> {
-                log.debug("Authentication failed: user not found for email={}", email);
+                log.debug("Authentication failed: user not found for email={}", LogUtil.maskEmail(email));
                 return new IllegalStateException("Invalid email or password");
             });
 
