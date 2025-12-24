@@ -8,6 +8,7 @@ import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class ClientService {
@@ -17,6 +18,10 @@ public class ClientService {
     public ClientService(ClientRepository clientRepository, CompanyRepository companyRepository) {
         this.clientRepository = clientRepository;
         this.companyRepository = companyRepository;
+    }
+
+    public Optional<Client> findById(UUID clientId) {
+        return clientRepository.findById(clientId);
     }
 
     public List<ClientDTO> getClientsByCompany(UUID companyId) {
