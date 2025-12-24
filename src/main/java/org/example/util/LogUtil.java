@@ -2,7 +2,7 @@ package org.example.util;
 
 public final class LogUtil {
 
-    public LogUtil() {}
+    private LogUtil() {}
 
     public static String maskEmail(String email) {
         if (email == null || !email.contains("@")) {

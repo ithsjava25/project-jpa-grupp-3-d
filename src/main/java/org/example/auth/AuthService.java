@@ -30,7 +30,10 @@ public class AuthService {
             });
 
         if (!PasswordEncoder.matches(password, user.getPassword())) {
-            log.debug("Authentication failed: password mismatch for userId={}", user.getId());
+            log.debug(
+                "Authentication failed: invalid credentials for email={}",
+                LogUtil.maskEmail(email)
+            );
             throw new IllegalStateException("Invalid email or password");
         }
 
