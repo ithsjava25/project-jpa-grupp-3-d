@@ -1,11 +1,11 @@
 package org.example;
 
 /**
- * Main entry point for the Invoice Management System
+ * Main entry point for the Invoice Management System CLI Application
  */
 public class App {
     public static void main(String[] args) {
-        // TODO: CLI application Implementation to be added
-        System.out.println("Invoice Management System");
+        CliApp cliApp = new CliApp();
+        cliApp.run();
     }
 }
