@@ -393,7 +393,7 @@ public class CliApp {
             UUID clientId = UUID.fromString(clientIdStr);
 
             // Verify client belongs to current company
-            var clientOpt = clientRepository.findById(clientId);
+            var clientOpt = clientService.findById(clientId);
             if (clientOpt.isEmpty()) {
                 System.out.println("✗ Client not found.");
                 return;
