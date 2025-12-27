@@ -33,13 +33,19 @@ public class Invoice {
     @Column (name= "number", nullable = false, unique = true)
     private String number;
 
-    @Column(name= "amount", nullable = false)
+    @Column(name= "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
     @Column(name= "due_date")
     private LocalDateTime dueDate;
-    @Column(name= "created_at")
+
+    @Column(name= "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<InvoiceItem> items = new HashSet<>();
