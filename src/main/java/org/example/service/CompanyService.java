@@ -106,6 +106,11 @@ public class CompanyService {
         return toDto(company);
     }
 
+    public Company getCompanyEntity(UUID companyId) {
+        return companyRepository.findById(companyId)
+            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
+    }
+
     public void deleteCompany(UUID companyId) {
         log.debug("Company deletion requested for companyId={}", companyId);
 
