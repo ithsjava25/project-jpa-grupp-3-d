@@ -7,8 +7,9 @@ import org.example.entity.User;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -19,18 +20,17 @@ import static org.mockito.Mockito.*;
 
 class CompanyServiceTest {
 
+    @Mock
     private UserRepository userRepository;
-    private CompanyUserRepository companyUserRepository;
-    private CompanyRepository companyRepository;
-    private CompanyService companyService;
 
-    @BeforeEach
-    void setUp() {
-        userRepository = mock(UserRepository.class);
-        companyUserRepository = mock(CompanyUserRepository.class);
-        companyRepository = mock(CompanyRepository.class);
-        companyService = new CompanyService(companyRepository, companyUserRepository, userRepository);
-    }
+    @Mock
+    private CompanyUserRepository companyUserRepository;
+
+    @Mock
+    private CompanyRepository companyRepository;
+
+    @InjectMocks
+    private CompanyService companyService;
 
     @Test
     void testCreateCompanySuccess() {
@@ -249,7 +249,6 @@ class CompanyServiceTest {
         company.setEmail("old@email.com");
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
-        when(companyRepository.existsByOrgNum("1111111111")).thenReturn(false);
 
         CompanyDTO dto = companyService.update(
             companyId,
