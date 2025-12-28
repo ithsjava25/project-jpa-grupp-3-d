@@ -86,6 +86,35 @@ class CompanyServiceTest {
     }
 
     @Test
+    void testCreateCompanyOrgNumAlreadyExists() {
+        UUID userId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(true);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+            companyService.create(
+                userId,
+                "1234567890",
+                "company@email.com",
+                "0701234567",
+                "TestCo",
+                "Street 1",
+                "City",
+                "Country"
+            )
+        );
+
+        assertTrue(exception.getMessage().contains("already exists"));
+
+        verify(companyRepository, never()).create(any());
+        verify(companyUserRepository, never()).create(any());
+    }
+
+    @Test
     void testUpdateCompanySuccess() {
         UUID companyId = UUID.randomUUID();
 
