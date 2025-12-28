@@ -1,5 +1,6 @@
 package org.example.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.entity.Company;
 import org.example.entity.User;
 import org.example.entity.CompanyUser;
@@ -11,6 +12,7 @@ import org.example.repository.UserRepository;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 public class CompanyUserService {
     private final UserRepository userRepository;
     private final CompanyUserRepository companyUserRepository;
