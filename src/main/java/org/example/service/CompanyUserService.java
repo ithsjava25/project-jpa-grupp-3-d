@@ -71,8 +71,11 @@ public class CompanyUserService {
     }
 
     public boolean isUserAssociatedWithCompany(UUID userId, UUID companyId) {
+        log.debug("Check if user {} is associated with company {}", userId, companyId);
         CompanyUserId id = new CompanyUserId(userId, companyId);
-        return companyUserRepository.findById(id).isPresent();
+        boolean associated = companyUserRepository.findById(id).isPresent();
+        log.debug("User {} association with company {}: {}", userId, companyId, associated);
+        return associated;
     }
 
     public List<CompanyUser> getCompanyUsers(UUID companyId) {
