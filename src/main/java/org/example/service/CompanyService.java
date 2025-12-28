@@ -35,14 +35,17 @@ public class CompanyService {
 
         log.debug("Company creation started: orgNum={}, creatorUserId={}", orgNum, creatorUserId);
 
-
-        // Validate creator exists
         User creator = userRepository.findById(creatorUserId)
-            .orElseThrow(() -> new IllegalArgumentException("Creator user not found with id: " + creatorUserId));
+            .orElseThrow(() -> {
+                log.warn("Company creation failed: Creator user not found with id={}", creatorUserId);
+                return new IllegalArgumentException("Creator user not found with id: " + creatorUserId);
+            });
 
         if (companyRepository.existsByOrgNum(orgNum)) {
+            log.warn("Company creation failed: Company with orgNum={} already exists", orgNum);
             throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
         }
+
 
         Company company = Company.builder()
             .orgNum(orgNum)
