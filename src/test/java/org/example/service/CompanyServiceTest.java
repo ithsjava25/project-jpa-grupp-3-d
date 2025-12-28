@@ -176,6 +176,36 @@ class CompanyServiceTest {
     }
 
     @Test
+    void testUpdateCompanyWithNullFields() {
+        UUID companyId = UUID.randomUUID();
+        Company company = new Company();
+        company.setId(companyId);
+        company.setName("OldName");
+        company.setOrgNum("1111111111");
+        company.setEmail("old@email.com");
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+        when(companyRepository.existsByOrgNum("1111111111")).thenReturn(false);
+
+        CompanyDTO dto = companyService.update(
+            companyId,
+            null,
+            null,
+            "new@email.com",
+            null,
+            null,
+            null,
+            null
+        );
+
+        assertEquals("OldName", dto.name());
+        assertEquals("1111111111", dto.orgNum());
+        assertEquals("new@email.com", dto.email());
+
+        verify(companyRepository, times(1)).update(company);
+    }
+
+    @Test
     void testUpdateCompanyNotFound() {
         UUID companyId = UUID.randomUUID();
 
