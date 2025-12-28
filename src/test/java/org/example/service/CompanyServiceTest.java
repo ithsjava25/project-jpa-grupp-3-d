@@ -61,6 +61,38 @@ class CompanyServiceTest {
     }
 
     @Test
+    void testCreateCompanyWithNullOptionalFields() {
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
+
+        CompanyDTO dto = companyService.create(
+            userId,
+            "1234567890",
+            null,
+            null,
+            "TestCo",
+            null,
+            null,
+            null
+        );
+
+        assertNotNull(dto);
+        assertEquals("TestCo", dto.name());
+        assertNull(dto.email());
+        assertNull(dto.phoneNumber());
+        assertNull(dto.address());
+        assertNull(dto.city());
+        assertNull(dto.country());
+
+        verify(companyRepository, times(1)).create(any(Company.class));
+        verify(companyUserRepository, times(1)).create(any(CompanyUser.class));
+    }
+
+    @Test
     void testCreateCompanyUserNotFound() {
         UUID userId = UUID.randomUUID();
 
