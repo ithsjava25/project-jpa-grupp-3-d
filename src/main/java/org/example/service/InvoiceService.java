@@ -1,15 +1,11 @@
 package org.example.service;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.example.dto.InvoiceDTO;
 import org.example.dto.InvoiceItemDTO;
-import org.example.entity.Client;
 import org.example.entity.Invoice;
 import org.example.entity.InvoiceItem;
 import org.example.entity.InvoiceStatus;
-import org.example.repository.ClientRepository;
-import org.example.repository.CompanyRepository;
-import org.example.repository.InvoiceItemRepository;
 import org.example.repository.InvoiceRepository;
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,6 +16,7 @@ import java.util.UUID;
 //One Service-class which is an Aggregate Root, An invoice and its lines/items are logically connected.
 // One line/item has no reason to exist without an invoice.
 // ie.  the method createInvoiceWithItems is more secure when both the lines/items and invoice are saved in the same transaction
+@Slf4j
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
@@ -45,10 +42,12 @@ public class InvoiceService {
     //Return DTO: Confirmation: this has been created with the definitive details)
     //we don't want to return entities because of safety or LazyInitializationException
     public InvoiceDTO createInvoice(InvoiceDTO dto, UUID userId) {
+        log.info("Attempting to create invoice for company {} by user {}", dto.companyId(), userId);
         //validation:
         validateUserAccess(userId, dto.companyId());
 
         invoiceRepository.findByInvoiceNumber(dto.number()).ifPresent(existing -> {
+            log.warn("Invoice creation failed: Number {} is already in use for company {}", dto.number(), dto.companyId());
             throw new IllegalArgumentException("Invoice number " + dto.number() + " already in use.");
         });
         // Translating DTO to Entity (to save in DB)
@@ -56,6 +55,8 @@ public class InvoiceService {
 
         // creates the entity (DB creates ID and timestamp)
         Invoice savedInvoice = invoiceRepository.create(invoice);
+
+        log.info("Created invoice for company {} by user {}", dto.companyId(), userId);
 
         // translate entity to DTO (to give the user a complete receipt)
         return mapToDTO(savedInvoice);
@@ -67,14 +68,17 @@ public class InvoiceService {
     //if invoice is found, it gets mapped from entity to DTO.
     // the user receives the actual total amount since calculate total is integrated here also
     public Optional<InvoiceDTO> getInvoiceById(UUID id, UUID userId, UUID companyId) {
-
+        log.info("Attempting to get invoice for company {} by user {}", companyId, userId);
         validateUserAccess(userId, companyId);
 
         return invoiceRepository.findByIdWithItems(id)
             .map(invoice -> {
                 if (!invoice.getCompany().getId().equals(companyId)) {
+                    log.error("SECURITY ALERT: User {} attempted to access invoice {} belonging to company {} (User's company context: {})",
+                        userId, id, invoice.getCompany().getId(), companyId);
                     throw new SecurityException("Access denied: Invoice does not belong to the specified company.");
                 }
+                log.info("Invoice found for company {} by user {}", companyId, userId);
                 return mapToDTO(invoice);
             });
 
@@ -83,8 +87,10 @@ public class InvoiceService {
 
 
     public void updateStatus(UUID id, InvoiceStatus newStatus, UUID userId, UUID companyId) {
+        log.info("Attempting to update invoice for company {} by user {}", companyId, userId);
         validateUserAccess(userId, companyId);
 
+        //Todo: continue logging
         Invoice invoice=invoiceRepository.findById(id)
             .orElseThrow(()->new EntityNotFoundException("Invoice not found"));
 
