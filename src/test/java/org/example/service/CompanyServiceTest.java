@@ -179,6 +179,39 @@ class CompanyServiceTest {
     }
 
     @Test
+    void testCreateCompanyAssociatesCompanyUserCorrectly() {
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
+
+        // Vi vill fånga argumentet som skickas till companyUserRepository.create
+        doAnswer(invocation -> {
+            CompanyUser cu = invocation.getArgument(0);
+            assertNotNull(cu.getUser());
+            assertEquals(userId, cu.getUser().getId());
+            assertNotNull(cu.getCompany());
+            assertEquals("1234567890", cu.getCompany().getOrgNum());
+            return null;
+        }).when(companyUserRepository).create(any(CompanyUser.class));
+
+        companyService.create(
+            userId,
+            "1234567890",
+            "company@email.com",
+            "0701234567",
+            "TestCo",
+            "Street 1",
+            "City",
+            "Country"
+        );
+
+        verify(companyUserRepository, times(1)).create(any(CompanyUser.class));
+    }
+
+    @Test
     void testUpdateCompanySuccess() {
         UUID companyId = UUID.randomUUID();
 
