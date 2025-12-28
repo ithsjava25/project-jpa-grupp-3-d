@@ -55,12 +55,19 @@ public class CompanyUserService {
     }
 
     public void deleteUserFromCompany(UUID companyId, UUID userId) {
+        log.debug("Delete user from company requested: companyId={}, userId={}", companyId, userId);
+
         CompanyUserId id = new CompanyUserId(userId, companyId);
 
         CompanyUser companyUser = companyUserRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User is not part of company"));
+            .orElseThrow(() -> {
+                log.warn("Delete user failed: User {} is not part of company {}", userId, companyId);
+                return new IllegalArgumentException("User is not part of company");
+            });
 
         companyUserRepository.delete(companyUser);
+
+        log.info("User {} removed from company {} successfully", userId, companyId);
     }
 
     public boolean isUserAssociatedWithCompany(UUID userId, UUID companyId) {
