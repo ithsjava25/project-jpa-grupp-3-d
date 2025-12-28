@@ -144,6 +144,30 @@ class CompanyServiceTest {
     }
 
     @Test
+    void testUpdateCompanyNotFound() {
+        UUID companyId = UUID.randomUUID();
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+            companyService.update(
+                companyId,
+                "Name",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            )
+        );
+
+        assertTrue(exception.getMessage().contains("Company not found"));
+
+        verify(companyRepository, never()).update(any());
+    }
+
+    @Test
     void testDeleteCompanySuccess() {
         UUID companyId = UUID.randomUUID();
 
