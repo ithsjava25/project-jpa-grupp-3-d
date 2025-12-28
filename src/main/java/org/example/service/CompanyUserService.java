@@ -23,7 +23,6 @@ public class CompanyUserService {
         this.companyRepository = companyRepository;
     }
 
-
     public void addUserToCompanyByEmail(UUID companyId, String email) {
         Company company = companyRepository.findById(companyId)
             .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
