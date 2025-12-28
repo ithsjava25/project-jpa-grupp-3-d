@@ -187,7 +187,6 @@ class CompanyServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
 
-        // Vi vill fånga argumentet som skickas till companyUserRepository.create
         doAnswer(invocation -> {
             CompanyUser cu = invocation.getArgument(0);
             assertNotNull(cu.getUser());
