@@ -26,22 +26,32 @@ public class CompanyUserService {
     }
 
     public void addUserToCompanyByEmail(UUID companyId, String email) {
+        log.debug("Add user to company requested: companyId={}, email={}", companyId, email);
+
         Company company = companyRepository.findById(companyId)
-            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
+            .orElseThrow(() -> {
+                log.warn("Add user failed: Company not found with id={}", companyId);
+                return new IllegalArgumentException("Company not found with id: " + companyId);
+            });
 
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+            .orElseThrow(() -> {
+                log.warn("Add user failed: User not found with email={}", email);
+                return new IllegalArgumentException("User not found with email: " + email);
+            });
 
         UUID userId = user.getId();
-
-        // Check if association already exists
         CompanyUserId id = new CompanyUserId(userId, companyId);
+
         if (companyUserRepository.findById(id).isPresent()) {
+            log.warn("Add user failed: User {} already associated with company {}", userId, companyId);
             throw new IllegalArgumentException("User is already associated with this company");
         }
 
         CompanyUser association = new CompanyUser(user, company);
         companyUserRepository.create(association);
+
+        log.info("User {} added to company {} successfully", userId, companyId);
     }
 
     public void deleteUserFromCompany(UUID companyId, UUID userId) {
