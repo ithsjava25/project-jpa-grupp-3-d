@@ -66,7 +66,32 @@ class CompanyServiceTest {
     }
 
     @Test
-    void update() {
+    void testUpdateCompanySuccess() {
+        UUID companyId = UUID.randomUUID();
+
+        Company company = new Company();
+        company.setId(companyId);
+        company.setName("OldName");
+        company.setOrgNum("1111111111");
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+        when(companyRepository.existsByOrgNum("2222222222")).thenReturn(false);
+
+        CompanyDTO dto = companyService.update(
+            companyId,
+            "NewName",
+            "2222222222",
+            "new@email.com",
+            "New Street",
+            "New City",
+            "New Country",
+            "0709999999"
+        );
+
+        assertEquals("NewName", dto.name());
+        assertEquals("2222222222", dto.orgNum());
+
+        verify(companyRepository, times(1)).update(company);
     }
 
     @Test
