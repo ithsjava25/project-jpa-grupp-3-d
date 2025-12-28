@@ -81,13 +81,16 @@ public class CompanyService {
 
 
         Company company = companyRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + id));
+            .orElseThrow(() -> {
+                log.warn("Company update failed: Company not found with id={}", id);
+                return new IllegalArgumentException("Company not found with id: " + id);
+            });
 
-        if (orgNum != null && !orgNum.equals(company.getOrgNum())) {
-            if (companyRepository.existsByOrgNum(orgNum)) {
-                throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
-            }
+        if (orgNum != null && !orgNum.equals(company.getOrgNum()) && companyRepository.existsByOrgNum(orgNum)) {
+            log.warn("Company update failed: OrgNum {} already exists", orgNum);
+            throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
         }
+
 
         if (name != null) company.setName(name);
         if (orgNum != null) company.setOrgNum(orgNum);
