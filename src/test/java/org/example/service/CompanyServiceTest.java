@@ -10,6 +10,7 @@ import org.example.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -90,6 +91,37 @@ class CompanyServiceTest {
 
         verify(companyRepository, times(1)).create(any(Company.class));
         verify(companyUserRepository, times(1)).create(any(CompanyUser.class));
+    }
+
+    @Test
+    void testUpdateCompanySetsUpdatedAt() {
+        UUID companyId = UUID.randomUUID();
+        Company company = new Company();
+        company.setId(companyId);
+        company.setName("OldName");
+        company.setOrgNum("1111111111");
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+        when(companyRepository.existsByOrgNum("2222222222")).thenReturn(false);
+
+        LocalDateTime beforeUpdate = LocalDateTime.now();
+        companyService.update(
+            companyId,
+            "NewName",
+            "2222222222",
+            "new@email.com",
+            "New Street",
+            "New City",
+            "New Country",
+            "0709999999"
+        );
+        LocalDateTime afterUpdate = LocalDateTime.now();
+
+        assertNotNull(company.getUpdatedAt());
+        assertTrue(company.getUpdatedAt().isAfter(beforeUpdate) || company.getUpdatedAt().isEqual(beforeUpdate));
+        assertTrue(company.getUpdatedAt().isBefore(afterUpdate) || company.getUpdatedAt().isEqual(afterUpdate));
+
+        verify(companyRepository, times(1)).update(company);
     }
 
     @Test
