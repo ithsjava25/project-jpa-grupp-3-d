@@ -46,7 +46,6 @@ public class CompanyService {
             throw new IllegalArgumentException("Company with orgNum " + orgNum + " already exists");
         }
 
-
         Company company = Company.builder()
             .orgNum(orgNum)
             .email(email)
@@ -62,6 +61,8 @@ public class CompanyService {
         // Automatically associate creator with the company
         CompanyUser creatorAssociation = new CompanyUser(creator, company);
         companyUserRepository.create(creatorAssociation);
+
+        log.info("Company created successfully with id={} by userId={}", company.getId(), creatorUserId);
 
         return toDto(company);
     }
