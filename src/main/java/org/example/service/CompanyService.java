@@ -66,7 +66,6 @@ public class CompanyService {
         companyUserRepository.create(creatorAssociation);
 
         log.info("Company created successfully with id={} by userId={}", company.getId(), creatorUserId);
-
         return CompanyDTO.fromEntity(company);
     }
 
@@ -105,7 +104,6 @@ public class CompanyService {
         companyRepository.update(company);
 
         log.info("Company updated successfully with id={}", company.getId());
-
         return CompanyDTO.fromEntity(company);
     }
 
@@ -124,7 +122,6 @@ public class CompanyService {
             });
 
         companyRepository.delete(company);
-
         log.info("Company deleted successfully with id={}", companyId);
     }
 }

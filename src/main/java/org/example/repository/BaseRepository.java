@@ -6,7 +6,6 @@ import jakarta.persistence.EntityManagerFactory;
 import java.util.Optional;
 import java.util.function.Function;
 
-
 public abstract class BaseRepository <T, ID> {
 
     private final EntityManagerFactory emf;
@@ -56,7 +55,6 @@ public abstract class BaseRepository <T, ID> {
             if (em.contains(entity)) {
                 em.remove(entity);
             } else {
-                // Entity is detached, fetch it by ID within the transaction
                 Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
                 if (id == null) {
                     throw new IllegalArgumentException("Cannot delete entity without an ID");
