@@ -45,4 +45,5 @@ public class CompanyRepository extends BaseRepository<Company, UUID>{
                 .getResultList()
         );
     }
+
 }
