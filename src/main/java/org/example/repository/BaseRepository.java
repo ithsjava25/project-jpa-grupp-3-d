@@ -82,4 +82,21 @@ public abstract class BaseRepository <T, ID> {
                 .getResultList()
         );
     }
+
+    public boolean existsById(ID id) {
+        return executeRead(em ->
+            em.find(entityClass, id) != null
+        );
+    }
+
+    public void deleteById(ID id) {
+        runInTransaction(em -> {
+            T entity = em.find(entityClass, id);
+            if (entity == null) {
+                throw new IllegalArgumentException(entityClass.getSimpleName() + " not found with id: " + id);
+            }
+            em.remove(entity);
+            return null;
+        });
+    }
 }

@@ -1,10 +1,9 @@
-package org.example;
+package org.example.service;
 
 
 import org.example.dto.UserDTO;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
-import org.example.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
