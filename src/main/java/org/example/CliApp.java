@@ -255,7 +255,7 @@ public class CliApp {
             }
 
             Company selectedCompany = userCompanies.get(choice - 1).getCompany();
-            currentCompany = companyService.toDto(selectedCompany);
+            currentCompany = CompanyDTO.fromEntity(selectedCompany);
             currentCompanyId = currentCompany.id();
             System.out.println("✓ Company selected: " + currentCompany.name() + " (" + currentCompany.orgNum() + ")");
             return true;

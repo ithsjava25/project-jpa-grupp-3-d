@@ -1,9 +1,10 @@
 package org.example.entity;
-import lombok.Builder.Default;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.dto.CompanyDTO;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -41,10 +42,13 @@ public class Company {
     private String country;
 
     @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
+
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private Set<Client> clients = new HashSet<>();
@@ -59,7 +63,6 @@ public class Company {
 
     public static Company fromDto(CompanyDTO dto) {
         return Company.builder()
-            .id(dto.id())
             .name(dto.name())
             .orgNum(dto.orgNum())
             .email(dto.email())
