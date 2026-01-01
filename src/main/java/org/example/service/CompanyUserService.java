@@ -27,14 +27,8 @@ public class CompanyUserService {
     }
 
     public void addUserToCompanyByEmail(UUID companyId, String email) {
-        if (companyId == null) {
-            log.warn("Add user failed: companyId is null");
-            throw new IllegalArgumentException("companyId cannot be null");
-        }
-        if (email == null) {
-            log.warn("Add user failed: email is null");
-            throw new IllegalArgumentException("email cannot be null");
-        }
+        if (companyId == null) throw new IllegalArgumentException("Company id cannot be null");
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("Email cannot be null or blank");
 
         log.debug("Add user to company requested: companyId={}, email={}", companyId, LogUtil.maskEmail(email));
 
@@ -50,21 +44,22 @@ public class CompanyUserService {
                 return new IllegalArgumentException("User not found with email: " + email);
             });
 
-        UUID userId = user.getId();
-        CompanyUserId id = new CompanyUserId(userId, companyId);
+        CompanyUserId id = new CompanyUserId(user.getId(), companyId);
 
         if (companyUserRepository.findById(id).isPresent()) {
-            log.warn("Add user failed: User {} already associated with company {}", userId, companyId);
+            log.warn("Add user failed: User {} already associated with company {}", user.getId(), companyId);
             throw new IllegalArgumentException("User is already associated with this company");
         }
 
         CompanyUser association = new CompanyUser(user, company);
         companyUserRepository.create(association);
 
-        log.info("User {} added to company {} successfully", userId, companyId);
+        log.info("User {} added to company {} successfully", user.getId(), companyId);
     }
 
     public void deleteUserFromCompany(UUID companyId, UUID userId) {
+        if (companyId == null || userId == null) throw new IllegalArgumentException("Company id and user id cannot be null");
+
         log.debug("Delete user from company requested: companyId={}, userId={}", companyId, userId);
 
         CompanyUserId id = new CompanyUserId(userId, companyId);
@@ -81,19 +76,26 @@ public class CompanyUserService {
     }
 
     public boolean isUserAssociatedWithCompany(UUID userId, UUID companyId) {
+        if (userId == null || companyId == null) throw new IllegalArgumentException("User id and company id cannot be null");
+
         log.debug("Check if user {} is associated with company {}", userId, companyId);
-        CompanyUserId id = new CompanyUserId(userId, companyId);
-        boolean associated = companyUserRepository.findById(id).isPresent();
+        boolean associated = companyUserRepository.findById(new CompanyUserId(userId, companyId)).isPresent();
         log.debug("User {} association with company {}: {}", userId, companyId, associated);
         return associated;
     }
 
+
     public List<CompanyUser> getCompanyUsers(UUID companyId) {
+        if (companyId == null) throw new IllegalArgumentException("Company id cannot be null");
+
         log.debug("Fetching all users for company {}", companyId);
         return companyUserRepository.findByCompanyId(companyId);
     }
 
+
     public List<CompanyUser> getUserCompanies(UUID userId) {
+        if (userId == null) throw new IllegalArgumentException("User id cannot be null");
+
         log.debug("Fetching all companies for user {}", userId);
         return companyUserRepository.findByUserId(userId);
     }

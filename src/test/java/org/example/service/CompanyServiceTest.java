@@ -7,6 +7,7 @@ import org.example.entity.User;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,9 +37,9 @@ class CompanyServiceTest {
     private CompanyService companyService;
 
     @Test
-    void testCreateCompanySuccess() {
+    @DisplayName("Should create company successfully")
+    void createCompanySuccess() {
         UUID userId = UUID.randomUUID();
-
         User user = new User();
         user.setId(userId);
 
@@ -46,14 +47,8 @@ class CompanyServiceTest {
         when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
 
         CompanyDTO dto = companyService.create(
-            userId,
-            "1234567890",
-            "company@email.com",
-            "0701234567",
-            "TestCo",
-            "Street 1",
-            "City",
-            "Country"
+            userId, "1234567890", "company@email.com",
+            "0701234567", "TestCo", "Street 1", "City", "Country"
         );
 
         assertNotNull(dto);
@@ -65,7 +60,8 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testCreateCompanyWithNullOptionalFields() {
+    @DisplayName("Should create company with null optional fields")
+    void createCompanyWithNullOptionalFields() {
         UUID userId = UUID.randomUUID();
         User user = new User();
         user.setId(userId);
@@ -74,14 +70,8 @@ class CompanyServiceTest {
         when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
 
         CompanyDTO dto = companyService.create(
-            userId,
-            "1234567890",
-            null,
-            null,
-            "TestCo",
-            null,
-            null,
-            null
+            userId, "1234567890", null, null,
+            "TestCo", null, null, null
         );
 
         assertNotNull(dto);
@@ -97,7 +87,8 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testUpdateCompanySetsUpdatedAt() {
+    @DisplayName("Should update company and set updatedAt")
+    void updateCompanySetsUpdatedAt() {
         UUID companyId = UUID.randomUUID();
         Company company = new Company();
         company.setId(companyId);
@@ -109,14 +100,9 @@ class CompanyServiceTest {
 
         LocalDateTime beforeUpdate = LocalDateTime.now();
         companyService.update(
-            companyId,
-            "NewName",
-            "2222222222",
-            "new@email.com",
-            "New Street",
-            "New City",
-            "New Country",
-            "0709999999"
+            companyId, "NewName", "2222222222",
+            "new@email.com", "New Street", "New City",
+            "New Country", "0709999999"
         );
         LocalDateTime afterUpdate = LocalDateTime.now();
 
@@ -128,22 +114,15 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testCreateCompanyUserNotFound() {
+    @DisplayName("Should throw exception if creator user not found")
+    void createCompanyUserNotFound() {
         UUID userId = UUID.randomUUID();
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(IllegalArgumentException.class, () ->
-            companyService.create(
-                userId,
-                "1234567890",
-                "company@email.com",
-                "0701234567",
-                "TestCo",
-                "Street 1",
-                "City",
-                "Country"
-            )
+            companyService.create(userId, "1234567890", "company@email.com",
+                "0701234567", "TestCo", "Street 1", "City", "Country")
         );
 
         assertTrue(exception.getMessage().contains("Creator user not found"));
@@ -153,9 +132,9 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testCreateCompanyOrgNumAlreadyExists() {
+    @DisplayName("Should throw exception if company orgNum already exists")
+    void createCompanyOrgNumAlreadyExists() {
         UUID userId = UUID.randomUUID();
-
         User user = new User();
         user.setId(userId);
 
@@ -163,16 +142,8 @@ class CompanyServiceTest {
         when(companyRepository.existsByOrgNum("1234567890")).thenReturn(true);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () ->
-            companyService.create(
-                userId,
-                "1234567890",
-                "company@email.com",
-                "0701234567",
-                "TestCo",
-                "Street 1",
-                "City",
-                "Country"
-            )
+            companyService.create(userId, "1234567890", "company@email.com",
+                "0701234567", "TestCo", "Street 1", "City", "Country")
         );
 
         assertTrue(exception.getMessage().contains("already exists"));
@@ -182,7 +153,8 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testCreateCompanyAssociatesCompanyUserCorrectly() {
+    @DisplayName("Should associate CompanyUser correctly when creating a company")
+    void createCompanyAssociatesCompanyUserCorrectly() {
         UUID userId = UUID.randomUUID();
         User user = new User();
         user.setId(userId);
@@ -199,24 +171,16 @@ class CompanyServiceTest {
             return null;
         }).when(companyUserRepository).create(any(CompanyUser.class));
 
-        companyService.create(
-            userId,
-            "1234567890",
-            "company@email.com",
-            "0701234567",
-            "TestCo",
-            "Street 1",
-            "City",
-            "Country"
-        );
+        companyService.create(userId, "1234567890", "company@email.com",
+            "0701234567", "TestCo", "Street 1", "City", "Country");
 
         verify(companyUserRepository, times(1)).create(any(CompanyUser.class));
     }
 
     @Test
-    void testUpdateCompanySuccess() {
+    @DisplayName("Should update company successfully")
+    void updateCompanySuccess() {
         UUID companyId = UUID.randomUUID();
-
         Company company = new Company();
         company.setId(companyId);
         company.setName("OldName");
@@ -226,14 +190,9 @@ class CompanyServiceTest {
         when(companyRepository.existsByOrgNum("2222222222")).thenReturn(false);
 
         CompanyDTO dto = companyService.update(
-            companyId,
-            "NewName",
-            "2222222222",
-            "new@email.com",
-            "New Street",
-            "New City",
-            "New Country",
-            "0709999999"
+            companyId, "NewName", "2222222222",
+            "new@email.com", "New Street", "New City",
+            "New Country", "0709999999"
         );
 
         assertEquals("NewName", dto.name());
@@ -243,7 +202,8 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testUpdateCompanyWithNullFields() {
+    @DisplayName("Should update company with null fields without overwriting")
+    void updateCompanyWithNullFields() {
         UUID companyId = UUID.randomUUID();
         Company company = new Company();
         company.setId(companyId);
@@ -254,14 +214,7 @@ class CompanyServiceTest {
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
 
         CompanyDTO dto = companyService.update(
-            companyId,
-            null,
-            null,
-            "new@email.com",
-            null,
-            null,
-            null,
-            null
+            companyId, null, null, "new@email.com", null, null, null, null
         );
 
         assertEquals("OldName", dto.name());
@@ -272,22 +225,14 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testUpdateCompanyNotFound() {
+    @DisplayName("Should throw exception if company not found for update")
+    void updateCompanyNotFound() {
         UUID companyId = UUID.randomUUID();
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(IllegalArgumentException.class, () ->
-            companyService.update(
-                companyId,
-                "Name",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            )
+            companyService.update(companyId, "Name", null, null, null, null, null, null)
         );
 
         assertTrue(exception.getMessage().contains("Company not found"));
@@ -296,29 +241,20 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testUpdateCompanyOrgNumAlreadyExists() {
+    @DisplayName("Should throw exception if orgNum already exists on update")
+    void updateCompanyOrgNumAlreadyExists() {
         UUID companyId = UUID.randomUUID();
-
         Company existingCompany = new Company();
         existingCompany.setId(companyId);
         existingCompany.setName("OldName");
         existingCompany.setOrgNum("1111111111");
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(existingCompany));
-
         when(companyRepository.existsByOrgNum("2222222222")).thenReturn(true);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () ->
-            companyService.update(
-                companyId,
-                "NewName",
-                "2222222222",
-                "new@email.com",
-                "New Street",
-                "New City",
-                "New Country",
-                "0709999999"
-            )
+            companyService.update(companyId, "NewName", "2222222222", "new@email.com",
+                "New Street", "New City", "New Country", "0709999999")
         );
 
         assertTrue(exception.getMessage().contains("already exists"));
@@ -327,9 +263,9 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testDeleteCompanySuccess() {
+    @DisplayName("Should delete company successfully")
+    void deleteCompanySuccess() {
         UUID companyId = UUID.randomUUID();
-
         Company company = new Company();
         company.setId(companyId);
 
@@ -341,16 +277,15 @@ class CompanyServiceTest {
     }
 
     @Test
-    void testDeleteCompanyNotFound() {
+    @DisplayName("Should throw exception if company not found for deletion")
+    void deleteCompanyNotFound() {
         UUID companyId = UUID.randomUUID();
-
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
-            () -> companyService.deleteCompany(companyId));
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+            companyService.deleteCompany(companyId));
 
         assertTrue(exception.getMessage().contains("Company not found"));
-
         verify(companyRepository, never()).delete(any());
     }
 }

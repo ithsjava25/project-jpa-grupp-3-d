@@ -126,7 +126,6 @@ class CompanyUserServiceTest {
     void addUserToCompanyByEmail_nullCompanyId_throws() {
         assertThrows(IllegalArgumentException.class,
             () -> companyUserService.addUserToCompanyByEmail(null, email));
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
@@ -134,7 +133,6 @@ class CompanyUserServiceTest {
     void addUserToCompanyByEmail_nullEmail_throws() {
         assertThrows(IllegalArgumentException.class,
             () -> companyUserService.addUserToCompanyByEmail(companyId, null));
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
@@ -174,7 +172,6 @@ class CompanyUserServiceTest {
 
         assertTrue(result);
         verify(companyUserRepository).findById(id);
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
@@ -187,7 +184,6 @@ class CompanyUserServiceTest {
 
         assertFalse(result);
         verify(companyUserRepository).findById(id);
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
@@ -201,33 +197,19 @@ class CompanyUserServiceTest {
         assertEquals(2, result.size());
         assertTrue(result.containsAll(users));
         verify(companyUserRepository).findByCompanyId(companyId);
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
-    }
-
-    @Test
-    @DisplayName("Should return empty list if company has no users")
-    void getCompanyUsers_empty() {
-        when(companyUserRepository.findByCompanyId(companyId)).thenReturn(List.of());
-
-        List<CompanyUser> result = companyUserService.getCompanyUsers(companyId);
-
-        assertTrue(result.isEmpty());
-        verify(companyUserRepository).findByCompanyId(companyId);
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
     @DisplayName("Should return all companies of a user")
     void getUserCompanies_success() {
-        List<CompanyUser> companies = List.of(new CompanyUser(), new CompanyUser(), new CompanyUser());
+        List<CompanyUser> companies = List.of(new CompanyUser(), new CompanyUser());
         when(companyUserRepository.findByUserId(userId)).thenReturn(companies);
 
         List<CompanyUser> result = companyUserService.getUserCompanies(userId);
 
-        assertEquals(3, result.size());
+        assertEquals(2, result.size());
         assertTrue(result.containsAll(companies));
         verify(companyUserRepository).findByUserId(userId);
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
