@@ -76,13 +76,6 @@ public abstract class BaseRepository <T, ID> {
         return executeRead(em -> Optional.ofNullable(em.find(entityClass, id)));
     }
 
-    public List<T> findAll() {
-        return executeRead(em ->
-            em.createQuery("SELECT e FROM " + entityClass.getSimpleName() + " e", entityClass)
-                .getResultList()
-        );
-    }
-
     public boolean existsById(ID id) {
         return executeRead(em ->
             em.find(entityClass, id) != null
