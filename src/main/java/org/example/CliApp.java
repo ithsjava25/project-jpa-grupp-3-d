@@ -428,7 +428,7 @@ public class CliApp {
             System.out.print("Phone Number [" + (client.getPhoneNumber() != null ? client.getPhoneNumber() : "") + "]: ");
             String phoneNumber = scanner.nextLine().trim();
 
-            ClientDTO updated = clientService.update(
+            ClientDTO updated = clientService.updateClient(
                 clientId,
                 firstName.isEmpty() ? null : firstName,
                 lastName.isEmpty() ? null : lastName,

@@ -25,84 +25,50 @@ public class ClientService {
     }
 
     public List<ClientDTO> getClientsByCompany(UUID companyId) {
-        List<Client> clients = clientRepository.findByCompanyId(companyId);
-        return clients.stream()
-            .map(this::toDto)
+        return clientRepository.findByCompanyId(companyId).stream()
+            .map(ClientDTO::fromEntity)
             .toList();
     }
 
-    public boolean isClientOwnedByCompany(UUID clientId, UUID companyId) {
-        return clientRepository.findById(clientId)
-            .map(client -> client.getCompany().getId().equals(companyId))
-            .orElse(false);
-    }
-
-
-    public void validateClientAccess(UUID clientId, UUID companyId) {
-        if (!isClientOwnedByCompany(clientId, companyId)) {
-            throw new SecurityException("Client " + clientId + " does not belong to company " + companyId);
-        }
-    }
-
-
-    public Client getClientEntity(UUID clientId) {
-        return clientRepository.findById(clientId)
-            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
-    }
-
     public ClientDTO createClient(UUID companyId,
-                                   String firstName,
-                                   String lastName,
-                                   String email,
-                                   String address,
-                                   String city,
-                                   String country,
-                                   String phoneNumber
-                     ) {
+                                  String firstName,
+                                  String lastName,
+                                  String email,
+                                  String address,
+                                  String city,
+                                  String country,
+                                  String phoneNumber) {
 
         Company company = companyRepository.findById(companyId)
             .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
 
-        Client client = new Client();
-        client.setCompany(company);
-        client.setFirstName(firstName);
-        client.setLastName(lastName);
-        client.setEmail(email);
-        client.setAddress(address);
-        client.setCity(city);
-        client.setCountry(country);
-        client.setPhoneNumber(phoneNumber);
+        Client client = Client.builder()
+            .company(company)
+            .firstName(firstName)
+            .lastName(lastName)
+            .email(email)
+            .address(address)
+            .city(city)
+            .country(country)
+            .phoneNumber(phoneNumber)
+            .build();
 
         clientRepository.create(client);
 
-        return toDto(client);
+        return ClientDTO.fromEntity(client);
     }
 
-
-    public void deleteClient(UUID clientId) {
-        Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
-
-        clientRepository.delete(client);
-    }
-
-
-
-
-
-    public ClientDTO update(
-        UUID clientId,
-        String firstName,
-        String lastName,
-        String email,
-        String address,
-        String city,
-        String country,
-        String phoneNumber) {
+    public ClientDTO updateClient(UUID clientId,
+                                  String firstName,
+                                  String lastName,
+                                  String email,
+                                  String address,
+                                  String city,
+                                  String country,
+                                  String phoneNumber) {
 
         Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
-
+            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
 
         if (firstName != null) client.setFirstName(firstName);
         if (lastName != null) client.setLastName(lastName);
@@ -113,22 +79,13 @@ public class ClientService {
         if (phoneNumber != null) client.setPhoneNumber(phoneNumber);
 
         clientRepository.update(client);
-        return toDto(client);
+        return ClientDTO.fromEntity(client);
     }
 
-    public ClientDTO toDto(Client client) {
-        return ClientDTO.builder()
-            .id(client.getId())
-            .companyId(client.getCompany().getId())
-            .firstName(client.getFirstName())
-            .lastName(client.getLastName())
-            .email(client.getEmail())
-            .address(client.getAddress())
-            .city(client.getCity())
-            .country(client.getCountry())
-            .phoneNumber(client.getPhoneNumber())
-            .createdAt(client.getCreatedAt())
-            .updatedAt(client.getUpdatedAt())
-            .build();
+    public void deleteClient(UUID clientId) {
+        Client client = clientRepository.findById(clientId)
+            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
+
+        clientRepository.delete(client);
     }
 }
