@@ -22,18 +22,20 @@ public class ClientTest {
     private ClientService clientService;
     private CompanyRepository companyRepository;
 
+    private UUID companyId;
+    private final Company company = new Company();
+
     @BeforeEach
     void setUp(){
         this.clientRepository = mock(ClientRepository.class);
         this.companyRepository = mock(CompanyRepository.class);
         this.clientService = new ClientService(clientRepository, companyRepository);
+        companyId = UUID.randomUUID();
     }
 
 
     @Test
     void shouldNotAllowClientCreationIfNoValidCompany() {
-        UUID companyId = UUID.randomUUID();
-
         // mock company does NOT exist
         when(companyRepository.findById(companyId))
             .thenReturn(Optional.empty());
@@ -55,10 +57,6 @@ public class ClientTest {
 
     @Test
     void shouldAllowClientCreationIfValidCompany() {
-        UUID companyId = UUID.randomUUID();
-        Company company = new Company();
-        company.setId(companyId);
-
         // mock valid company
         when(companyRepository.findById(companyId))
             .thenReturn(Optional.of(company));
