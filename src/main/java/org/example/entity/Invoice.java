@@ -2,12 +2,13 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.dto.InvoiceDTO;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table (name="invoices")
@@ -36,20 +37,48 @@ public class Invoice {
     @Column(name= "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
+    private BigDecimal vatAmount;
+
     @Column(name= "due_date")
     private LocalDateTime dueDate;
 
-    @Column(name= "created_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<InvoiceItem> items = new HashSet<>();
+    private List<InvoiceItem> invoiceItems = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status;
+
+    public void addItem(InvoiceItem item) {
+        invoiceItems.add(item);
+        item.setInvoice(this);
+        recalcTotals();
+    }
+
+    public void clearItems() {
+        invoiceItems.clear();
+        recalcTotals();
+    }
+
+    public void recalcTotals() {
+        amount = invoiceItems.stream()
+            .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public static Invoice fromDTO(InvoiceDTO dto, Company company, Client client) {
+        Invoice invoice = new Invoice();
+        invoice.setCompany(company);
+        invoice.setClient(client);
+        invoice.setNumber(dto.number());
+        invoice.setDueDate(dto.dueDate());
+        invoice.setStatus(dto.status() != null ? dto.status() : InvoiceStatus.CREATED);
+        invoice.amount = dto.amount() != null ? dto.amount() : BigDecimal.ZERO;
+        return invoice;
+    }
 }
