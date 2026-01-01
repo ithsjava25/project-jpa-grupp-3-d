@@ -88,6 +88,28 @@ class CompanyUserServiceTest {
     }
 
     @Test
+    void addUserToCompanyByEmail_userAlreadyAssociated() {
+        UUID companyId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        String email = "test@email.com";
+        Company company = new Company();
+        company.setId(companyId);
+        User user = new User();
+        user.setId(userId);
+        user.setEmail(email);
+        CompanyUserId id = new CompanyUserId(userId, companyId);
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(companyUserRepository.findById(id)).thenReturn(Optional.of(new CompanyUser()));
+
+        Exception ex = assertThrows(IllegalArgumentException.class,
+            () -> companyUserService.addUserToCompanyByEmail(companyId, email));
+
+        assertTrue(ex.getMessage().contains("already associated"));
+    }
+
+    @Test
     void deleteUserFromCompany() {
     }
 
