@@ -68,7 +68,7 @@ public class ClientService {
                                   String phoneNumber) {
 
         Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
+            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
 
         if (firstName != null) client.setFirstName(firstName);
         if (lastName != null) client.setLastName(lastName);
