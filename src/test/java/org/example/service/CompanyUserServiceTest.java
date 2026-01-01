@@ -161,7 +161,14 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    void getCompanyUsers() {
+    void getCompanyUsers_success() {
+        UUID companyId = UUID.randomUUID();
+        List<CompanyUser> users = List.of(new CompanyUser(), new CompanyUser());
+        when(companyUserRepository.findByCompanyId(companyId)).thenReturn(users);
+
+        List<CompanyUser> result = companyUserService.getCompanyUsers(companyId);
+
+        assertEquals(2, result.size());
     }
 
     @Test
