@@ -58,6 +58,18 @@ class CompanyUserServiceTest {
         verify(companyUserRepository, times(1)).create(any(CompanyUser.class));
     }
 
+    @Test
+    void addUserToCompanyByEmail_companyNotFound() {
+        UUID companyId = UUID.randomUUID();
+        String email = "test@email.com";
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
+
+        Exception ex = assertThrows(IllegalArgumentException.class,
+            () -> companyUserService.addUserToCompanyByEmail(companyId, email));
+
+        assertTrue(ex.getMessage().contains("Company not found"));
+    }
 
     @Test
     void deleteUserFromCompany() {
