@@ -65,7 +65,6 @@ class CompanyServiceTest {
         verify(companyUserRepository, times(1)).create(any(CompanyUser.class));
     }
 
-
     @Test
     @DisplayName("Should create company with null optional fields")
     void createCompanyWithNullOptionalFields() {
@@ -132,8 +131,6 @@ class CompanyServiceTest {
         verify(companyRepository, times(1)).update(company);
     }
 
-
-
     @Test
     @DisplayName("Should throw exception if creator user not found")
     void createCompanyUserNotFound() {
@@ -183,7 +180,6 @@ class CompanyServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
 
-
         doAnswer(invocation -> {
             Company company = invocation.getArgument(0);
             company.setId(UUID.randomUUID());
@@ -214,7 +210,6 @@ class CompanyServiceTest {
         verify(companyRepository, times(1)).create(any(Company.class));
         verify(companyUserRepository, times(1)).create(any(CompanyUser.class));
     }
-
 
     @Test
     @DisplayName("Should update company successfully")

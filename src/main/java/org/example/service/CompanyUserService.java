@@ -84,14 +84,12 @@ public class CompanyUserService {
         return associated;
     }
 
-
     public List<CompanyUser> getCompanyUsers(UUID companyId) {
         if (companyId == null) throw new IllegalArgumentException("Company id cannot be null");
 
         log.debug("Fetching all users for company {}", companyId);
         return companyUserRepository.findByCompanyId(companyId);
     }
-
 
     public List<CompanyUser> getUserCompanies(UUID userId) {
         if (userId == null) throw new IllegalArgumentException("User id cannot be null");

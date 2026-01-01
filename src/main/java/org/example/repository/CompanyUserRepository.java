@@ -7,7 +7,6 @@ import org.example.entity.CompanyUserId;
 import java.util.List;
 import java.util.UUID;
 
-
 public class CompanyUserRepository extends BaseRepository<CompanyUser, CompanyUserId> {
     public CompanyUserRepository(EntityManagerFactory emf) {
         super(emf, CompanyUser.class);
