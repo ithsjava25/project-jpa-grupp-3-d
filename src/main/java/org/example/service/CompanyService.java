@@ -34,6 +34,10 @@ public class CompanyService {
         String city,
         String country) {
 
+        if (creatorUserId == null) throw new IllegalArgumentException("Creator userId cannot be null");
+        if (orgNum == null || orgNum.isBlank()) throw new IllegalArgumentException("OrgNum cannot be null or blank");
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("Company name cannot be null or blank");
+
         log.debug("Company creation started: orgNum={}, creatorUserId={}", orgNum, creatorUserId);
 
         User creator = userRepository.findById(creatorUserId)
@@ -75,6 +79,8 @@ public class CompanyService {
                              String city,
                              String country,
                              String phoneNumber) {
+
+        if (id == null) throw new IllegalArgumentException("Company id cannot be null");
 
         log.debug("Company update started for id={}", id);
 
