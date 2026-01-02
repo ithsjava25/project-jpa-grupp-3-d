@@ -1,8 +1,8 @@
-package org.example.entity;
+package org.example.entity.user;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.entity.user.User;
+import org.example.entity.Company;
 
 @Entity
 @Table(name = "company_user")

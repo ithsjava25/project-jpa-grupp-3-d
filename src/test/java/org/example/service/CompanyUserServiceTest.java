@@ -1,8 +1,8 @@
 package org.example.service;
 
 import org.example.entity.Company;
-import org.example.entity.CompanyUser;
-import org.example.entity.CompanyUserId;
+import org.example.entity.user.CompanyUser;
+import org.example.entity.user.CompanyUserId;
 import org.example.entity.user.User;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;

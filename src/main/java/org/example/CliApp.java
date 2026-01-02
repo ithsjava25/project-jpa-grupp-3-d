@@ -8,7 +8,7 @@ import org.example.entity.client.UpdateClientDTO;
 import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
 import org.example.entity.Company;
-import org.example.entity.CompanyUser;
+import org.example.entity.user.CompanyUser;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
