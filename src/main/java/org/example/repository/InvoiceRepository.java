@@ -1,8 +1,8 @@
 package org.example.repository;
 
 import jakarta.persistence.EntityManagerFactory;
-import org.example.entity.Invoice;
-import org.example.entity.InvoiceStatus;
+import org.example.entity.invoice.Invoice;
+import org.example.entity.invoice.InvoiceStatus;
 
 import java.util.List;
 import java.util.Optional;

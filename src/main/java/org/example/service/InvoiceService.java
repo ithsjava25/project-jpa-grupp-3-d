@@ -1,8 +1,7 @@
 package org.example.service;
 
 import jakarta.persistence.EntityNotFoundException;
-import org.example.dto.InvoiceDTO;
-import org.example.dto.InvoiceItemDTO;
+import org.example.entity.invoice.*;
 import org.example.entity.*;
 import org.example.entity.client.Client;
 import org.example.repository.ClientRepository;
@@ -28,9 +27,9 @@ public class InvoiceService {
         this.clientRepository = clientRepository;
     }
 
-    public InvoiceDTO createInvoice(InvoiceDTO dto) {
+    public InvoiceDTO createInvoice(CreateInvoiceDTO dto) {
         if (invoiceRepository.findByInvoiceNumber(dto.number()).isPresent()) {
-            throw new IllegalArgumentException("Invoice number already in use " + dto.number());
+            throw new IllegalArgumentException("Invoice number already in use: " + dto.number());
         }
 
         Company company = companyRepository.findById(dto.companyId())
@@ -40,9 +39,35 @@ public class InvoiceService {
             .orElseThrow(() -> new EntityNotFoundException("Client not found"));
 
         Invoice invoice = Invoice.fromDTO(dto, company, client);
+
         Invoice saved = invoiceRepository.create(invoice);
         return InvoiceDTO.fromEntity(saved);
     }
+
+
+    public InvoiceDTO updateInvoice(UpdateInvoiceDTO dto) {
+        Invoice invoice = invoiceRepository.findByIdWithItems(dto.invoiceId())
+            .orElseThrow(() -> new EntityNotFoundException("Invoice not found"));
+
+        if (dto.dueDate() != null) invoice.setDueDate(dto.dueDate());
+        if (dto.status() != null) invoice.setStatus(dto.status());
+
+        if (dto.items() != null) {
+            invoice.clearItems();
+            dto.items().forEach(itemDTO -> {
+                InvoiceItem item = new InvoiceItem();
+                item.setQuantity(itemDTO.quantity());
+                item.setUnitPrice(itemDTO.unitPrice());
+                invoice.addItem(item);
+            });
+        }
+
+        invoice.recalcTotals();
+        Invoice updated = invoiceRepository.update(invoice);
+        return InvoiceDTO.fromEntity(updated);
+    }
+
+
 
     public Optional<InvoiceDTO> getInvoiceById(UUID id) {
         return invoiceRepository.findByIdWithItems(id)

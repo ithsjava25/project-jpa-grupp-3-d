@@ -7,8 +7,8 @@
         <class>org.example.entity.user.User</class>
         <class>org.example.entity.Company</class>
         <class>org.example.entity.client.Client</class>
-        <class>org.example.entity.Invoice</class>
-        <class>org.example.entity.InvoiceItem</class>
+        <class>org.example.entity.invoice.Invoice</class>
+        <class>org.example.entity.invoice.InvoiceItem</class>
         <class>org.example.entity.CompanyUser</class>
         <properties>
             <!-- Database connection settings -->
