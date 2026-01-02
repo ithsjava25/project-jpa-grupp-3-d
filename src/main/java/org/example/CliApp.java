@@ -3,7 +3,8 @@ package org.example;
 import jakarta.persistence.EntityManagerFactory;
 import org.example.dto.ClientDTO;
 import org.example.dto.CompanyDTO;
-import org.example.dto.UserDTO;
+import org.example.entity.user.CreateUserDTO;
+import org.example.entity.user.UserDTO;
 import org.example.entity.Company;
 import org.example.entity.CompanyUser;
 import org.example.repository.ClientRepository;
@@ -150,7 +151,8 @@ public class CliApp {
         String password = readPassword();
 
         try {
-            currentUser = userService.register(firstName, lastName, email, password);
+            CreateUserDTO dto = new CreateUserDTO(firstName, lastName, email, password);
+            currentUser = userService.register(dto);
             currentUserId = currentUser.id();
             System.out.println("✓ Registration successful! Welcome, " + currentUser.firstName() + " " + currentUser.lastName());
             return true;

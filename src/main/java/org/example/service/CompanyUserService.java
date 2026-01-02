@@ -2,7 +2,7 @@ package org.example.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.entity.Company;
-import org.example.entity.User;
+import org.example.entity.user.User;
 import org.example.entity.CompanyUser;
 import org.example.entity.CompanyUserId;
 import org.example.repository.CompanyRepository;

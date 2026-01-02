@@ -4,7 +4,7 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd">
     <persistence-unit name="jpa-hibernate-mysql">
-        <class>org.example.entity.User</class>
+        <class>org.example.entity.user.User</class>
         <class>org.example.entity.Company</class>
         <class>org.example.entity.Client</class>
         <class>org.example.entity.Invoice</class>

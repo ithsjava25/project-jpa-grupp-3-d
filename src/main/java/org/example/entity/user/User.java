@@ -1,7 +1,9 @@
-package org.example.entity;
+package org.example.entity.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,6 +12,7 @@ import java.util.UUID;
 @Table(name = "users")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -31,20 +34,18 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    public static User fromDTO(CreateUserDTO dto) {
+        return User.builder()
+            .firstName(dto.firstName())
+            .lastName(dto.lastName())
+            .email(dto.email())
+            .password(dto.password())
+            .build();
     }
 }
