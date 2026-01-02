@@ -2,13 +2,13 @@ package org.example;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.client.ClientDTO;
-import org.example.dto.CompanyDTO;
+import org.example.entity.company.CompanyDTO;
 import org.example.entity.client.CreateClientDTO;
 import org.example.entity.client.UpdateClientDTO;
 import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
-import org.example.entity.Company;
-import org.example.entity.user.CompanyUser;
+import org.example.entity.company.Company;
+import org.example.entity.company.CompanyUser;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;

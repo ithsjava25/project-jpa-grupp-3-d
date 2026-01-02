@@ -4,7 +4,7 @@ import org.example.entity.client.ClientDTO;
 import org.example.entity.client.Client;
 import org.example.entity.client.CreateClientDTO;
 import org.example.entity.client.UpdateClientDTO;
-import org.example.entity.Company;
+import org.example.entity.company.Company;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.junit.jupiter.api.BeforeEach;

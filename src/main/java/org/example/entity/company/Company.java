@@ -1,10 +1,9 @@
-package org.example.entity;
+package org.example.entity.company;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.entity.client.Client;
 import org.example.entity.invoice.Invoice;
-import org.example.entity.user.CompanyUser;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -66,7 +65,7 @@ public class Company {
     @ToString.Exclude
     private Set<CompanyUser> companyUsers = new HashSet<>();
 
-    public static Company fromDto(org.example.dto.CompanyDTO dto) {
+    public static Company fromDto(CompanyDTO dto) {
         return Company.builder()
             .name(dto.name())
             .orgNum(dto.orgNum())

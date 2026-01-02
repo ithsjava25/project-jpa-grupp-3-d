@@ -2,7 +2,7 @@ package org.example.entity.invoice;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.entity.Company;
+import org.example.entity.company.Company;
 import org.example.entity.client.Client;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;

@@ -1,7 +1,7 @@
 package org.example.repository;
 
 import jakarta.persistence.EntityManagerFactory;
-import org.example.entity.Company;
+import org.example.entity.company.Company;
 
 import java.util.UUID;
 

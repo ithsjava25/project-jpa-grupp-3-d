@@ -1,7 +1,6 @@
-package org.example.dto;
+package org.example.entity.company;
 
 import lombok.Builder;
-import org.example.entity.Company;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

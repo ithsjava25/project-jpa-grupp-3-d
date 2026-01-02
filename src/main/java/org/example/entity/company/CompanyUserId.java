@@ -1,4 +1,4 @@
-package org.example.entity.user;
+package org.example.entity.company;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;

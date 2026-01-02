@@ -1,8 +1,8 @@
 package org.example.service;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.example.entity.company.Company;
 import org.example.entity.invoice.*;
-import org.example.entity.*;
 import org.example.entity.client.Client;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
