@@ -1,6 +1,5 @@
 package org.example.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.example.entity.client.ClientDTO;
 import org.example.entity.client.Client;
 import org.example.entity.company.Company;
@@ -82,7 +81,7 @@ public class ClientService {
 
     public void deleteClient(UUID clientId) {
         Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
+            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
 
         clientRepository.delete(client);
     }

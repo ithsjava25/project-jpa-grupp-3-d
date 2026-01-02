@@ -1,6 +1,5 @@
 package org.example.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.example.entity.company.Company;
 import org.example.entity.invoice.*;
 import org.example.entity.client.Client;
@@ -33,10 +32,10 @@ public class InvoiceService {
         }
 
         Company company = companyRepository.findById(dto.companyId())
-            .orElseThrow(() -> new EntityNotFoundException("Company not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Company not found"));
 
         Client client = clientRepository.findById(dto.clientId())
-            .orElseThrow(() -> new EntityNotFoundException("Client not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Client not found"));
 
         Invoice invoice = Invoice.fromDTO(dto, company, client);
 
@@ -47,7 +46,7 @@ public class InvoiceService {
 
     public InvoiceDTO updateInvoice(UpdateInvoiceDTO dto) {
         Invoice invoice = invoiceRepository.findByIdWithItems(dto.invoiceId())
-            .orElseThrow(() -> new EntityNotFoundException("Invoice not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
 
         if (dto.dueDate() != null) invoice.setDueDate(dto.dueDate());
         if (dto.status() != null) invoice.setStatus(dto.status());
@@ -76,21 +75,21 @@ public class InvoiceService {
 
     public void updateStatus(UUID id, InvoiceStatus newStatus) {
         Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Invoice not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
         invoice.setStatus(newStatus);
         invoiceRepository.update(invoice);
     }
 
     public void deleteById(UUID id) {
         if (!invoiceRepository.existsById(id)) {
-            throw new EntityNotFoundException("Invoice not found");
+            throw new IllegalArgumentException("Invoice not found");
         }
         invoiceRepository.deleteById(id);
     }
 
     public InvoiceDTO updateInvoiceItems(UUID id, Set<InvoiceItemDTO> items) {
         Invoice invoice = invoiceRepository.findByIdWithItems(id)
-            .orElseThrow(() -> new EntityNotFoundException("Invoice not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
 
         invoice.clearItems();
         items.forEach(dto -> {
