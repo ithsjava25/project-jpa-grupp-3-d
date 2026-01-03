@@ -147,4 +147,23 @@ public class InvoiceServiceTest {
         // Assert
         verify(invoiceRepository, times(1)).delete(invoice);
     }
+
+    @Test
+    void testCreateInvoice_UserNotAssociatedWithCompany() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID companyId = UUID.randomUUID();
+        InvoiceDTO inputDto = new InvoiceDTO(null, companyId, null, "INV-001", BigDecimal.ZERO, null, null, null);
+
+        // simulates that the user does not have access
+        when(companyUserService.isUserAssociatedWithCompany(userId, companyId)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(SecurityException.class, () -> {
+            invoiceService.createInvoice(inputDto, userId);
+        });
+
+        // verify that we never checked if the invoice exists
+        verify(invoiceRepository, never()).findByInvoiceNumber(anyString());
+    }
 }
