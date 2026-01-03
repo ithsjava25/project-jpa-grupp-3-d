@@ -87,14 +87,18 @@ public class InvoiceService {
 
 
     public void updateStatus(UUID id, InvoiceStatus newStatus, UUID userId, UUID companyId) {
-        log.info("Attempting to update invoice for company {} by user {}", companyId, userId);
+        log.info("User {} is attempting to update status to {} on invoice {}", userId, newStatus, id);
         validateUserAccess(userId, companyId);
 
-        //Todo: continue logging
+
         Invoice invoice=invoiceRepository.findById(id)
-            .orElseThrow(()->new EntityNotFoundException("Invoice not found"));
+            .orElseThrow(()->{
+                log.warn("Update failed: Invoice {} not found", id);
+                return new EntityNotFoundException("Invoice not found");
+            });
 
         if (!invoice.getCompany().getId().equals(companyId)) {
+            log.error("SECURITY ALERT: User {} tried to update invoice {} belonging to another company!", userId, id);
             throw new SecurityException("Unauthorized access to this invoice.");
         }
 
@@ -103,17 +107,22 @@ public class InvoiceService {
 
         //saves the update to the database
         invoiceRepository.update(invoice);
-
+        log.info("Invoice {} status successfully updated to {}", id, newStatus);
     }
 
+
     public void deleteById(UUID id, UUID userId, UUID companyId) {
+        log.info("User {} requesting deletion of invoice {}", userId, id);
         validateUserAccess(userId, companyId);
 
         invoiceRepository.findById(id).ifPresent(invoice -> {
+            log.error("SECURITY ALERT: User {} tried to delete invoice {} from company {}", userId, id, invoice.getCompany().getId());
             if (!invoice.getCompany().getId().equals(companyId)) {
                 throw new SecurityException("Unauthorized");
             }
             invoiceRepository.delete(invoice);
+            log.info("Invoice {} deleted successfully", id);
+
         });
 
     }
@@ -121,6 +130,7 @@ public class InvoiceService {
 
     //method to update items on an existing invoice
     public InvoiceDTO updateInvoiceItems(UUID id, Set<InvoiceItemDTO> newItemDtos, UUID userId, UUID companyId) {
+        log.info("User {} updating items for invoice {}. New item count: {}", userId, id, newItemDtos.size());
         validateUserAccess(userId, companyId);
 
         Invoice invoice=invoiceRepository.findByIdWithItems(id)
@@ -132,6 +142,7 @@ public class InvoiceService {
 
         //clears the current set to handle deletions (orphan removal handles SQL)
         invoice.getItems().clear();
+        log.debug("Adding {} new items to invoice {}", newItemDtos.size(), id);
 
         //Maps the new DTOs to entities and adds them
         for (InvoiceItemDTO itemDto : newItemDtos) {
@@ -144,41 +155,58 @@ public class InvoiceService {
         invoice.setAmount(calculateTotal(invoice.getItems()));
         //saves the complete Invoice
         Invoice updatedInvoice=invoiceRepository.update(invoice);
+        log.info("Invoice {} successfully updated. New total amount: {}", id, updatedInvoice.getAmount());
 
         //returns the updated invoice as DTO
         return mapToDTO(updatedInvoice);
     }
     public List<InvoiceDTO> getInvoicesByClientForCompany(UUID clientId, UUID companyId, UUID userId) {
+        log.info("User {} is fetching invoices for client {} belonging to company {}", userId, clientId, companyId);
         //check if user is connected to the company
         validateUserAccess(userId, companyId);
 
         clientService.validateClientAccess(clientId, companyId);
 
-        return invoiceRepository.findAllByClientId(clientId).stream()
+        List<InvoiceDTO> invoices = invoiceRepository.findAllByClientId(clientId).stream()
             .map(this::mapToDTO)
             .toList();
+
+        log.debug("Found {} invoices for client {} (Company context: {})", invoices.size(), clientId, companyId);
+
+        return invoices;
     }
 
 
     public List<InvoiceDTO> getCompanyInvoices(UUID userId, UUID companyId) {
+        log.info("Fetching all invoices for company {} (requested by user {})", companyId, userId);
         validateUserAccess(userId, companyId);
 
-        return invoiceRepository.findAllByCompanyId(companyId).stream()
+        List<InvoiceDTO> invoices = invoiceRepository.findAllByCompanyId(companyId).stream()
             .map(this::mapToDTO)
             .toList();
+
+        log.debug("Found {} invoices for company {}", invoices.size(), companyId);
+        return invoices;
+
     }
 
 
     public List<InvoiceDTO> getInvoicesByStatusForCompany(UUID userId, UUID companyId, InvoiceStatus status) {
+        log.info("User {} is requesting invoices with status: {} for company {}", userId, status, companyId);
         validateUserAccess(userId, companyId);
 
-        return invoiceRepository.findAllByStatusAndCompany(status, companyId).stream()
+        List<InvoiceDTO> invoices = invoiceRepository.findAllByStatusAndCompany(status, companyId).stream()
             .map(this::mapToDTO)
             .toList();
+
+        log.debug("Found {} invoices with status {} for company {}", invoices.size(), status, companyId);
+
+        return invoices;
     }
 
     private void validateUserAccess(UUID userId, UUID companyId) {
         if (!companyUserService.isUserAssociatedWithCompany(userId, companyId)) {
+            log.error("SECURITY ALERT: User {} is not authorized for company {}", userId, companyId);
             throw new SecurityException("User " + userId + " is not authorized to access company " + companyId);
         }
     }
