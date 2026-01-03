@@ -80,6 +80,27 @@ public class InvoiceServiceTest {
     }
 
     @Test
+    void testCreateInvoice_NumberAlreadyExists() {
+        // Arrange
+        UUID userId = UUID.randomUUID();
+        UUID companyId = UUID.randomUUID();
+        InvoiceDTO inputDto = new InvoiceDTO(null, companyId, null, "INV-EXIST", BigDecimal.ZERO, null, null, null);
+
+        when(companyUserService.isUserAssociatedWithCompany(userId, companyId)).thenReturn(true);
+        //simulates that the number already exists in the database
+        when(invoiceRepository.findByInvoiceNumber("INV-EXIST")).thenReturn(Optional.of(new Invoice()));
+
+        // Act & Assert
+        // were expecting an IllegalArgumentException
+        assertThrows(IllegalArgumentException.class, () -> {
+            invoiceService.createInvoice(inputDto, userId);
+        });
+
+        // verify that "create" was never called
+        verify(invoiceRepository, never()).create(any());
+    }
+
+    @Test
     void testGetInvoiceById_SecurityException() {
         // Arrange
         UUID invoiceId = UUID.randomUUID();
