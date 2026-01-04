@@ -836,12 +836,12 @@ public class CliApp {
         try {
             UpdateCompanyDTO updateDto = new UpdateCompanyDTO(
                 currentCompanyId,
-                name.isEmpty() ? null : name,
                 email.isEmpty() ? null : email,
+                phoneNumber.isEmpty() ? null : phoneNumber,
+                name.isEmpty() ? null : name,
                 address.isEmpty() ? null : address,
                 city.isEmpty() ? null : city,
-                country.isEmpty() ? null : country,
-                phoneNumber.isEmpty() ? null : phoneNumber
+                country.isEmpty() ? null : country
             );
 
             currentCompany = companyService.update(updateDto);
