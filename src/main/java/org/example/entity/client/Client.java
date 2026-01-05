@@ -1,7 +1,10 @@
-package org.example.entity;
+package org.example.entity.client;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.entity.company.Company;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,6 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
+@Builder
 public class Client {
 
     @Id
@@ -37,20 +41,24 @@ public class Client {
     private String country;
     private String phoneNumber;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+
+    public static Client fromDTO(CreateClientDTO dto, Company company) {
+        return Client.builder()
+            .company(company)
+            .firstName(dto.firstName())
+            .lastName(dto.lastName())
+            .email(dto.email())
+            .address(dto.address())
+            .city(dto.city())
+            .country(dto.country())
+            .phoneNumber(dto.phoneNumber())
+            .build();
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

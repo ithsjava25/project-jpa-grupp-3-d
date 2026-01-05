@@ -1,13 +1,11 @@
-package org.example;
+package org.example.service;
 
-
-import org.example.dto.UserDTO;
-import org.example.entity.User;
+import org.example.entity.user.CreateUserDTO;
+import org.example.entity.user.UserDTO;
+import org.example.entity.user.User;
 import org.example.repository.UserRepository;
-import org.example.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,10 +29,9 @@ public class UserServiceTest {
         String email = "test2@email.com";
         when(userRepository.existsByEmail(email)).thenReturn(false);
         UserDTO userDTO = userService.register(
-            "test",
-            "test",
-            email,
-            "password"
+            new CreateUserDTO(
+                "test", "test", email, "password"
+            )
         );
 
         assertNotNull(userDTO);
@@ -51,7 +48,10 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(email)).thenReturn(true);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.register("test", "test", email, "pass");
+            userService.register(
+                new CreateUserDTO(
+                    "test", "test", email, "pass"
+                ));
         });
 
         assertEquals("Invalid registration data", exception.getMessage());
@@ -63,10 +63,9 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(any())).thenReturn(false);
 
         UserDTO dto = userService.register(
-            "test",
-            "test",
-            "test@email.com",
-            "password"
+            new CreateUserDTO(
+                "test", "test", "test@email.com", "password"
+            )
         );
 
         verify(userRepository).create(argThat(user ->
@@ -104,7 +103,10 @@ public class UserServiceTest {
         String invalidEmail = "invalid-email";
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.register("John", "Doe", invalidEmail, "password123");
+            userService.register(
+                new CreateUserDTO(
+                    "John", "Doe", invalidEmail, "password123"
+                ));
         });
 
         assertEquals("Invalid registration data", exception.getMessage());
@@ -114,10 +116,13 @@ public class UserServiceTest {
     @Test
     void testRegisterUserWithInvalidPassword() {
         String email = "test@email.com";
-        String shortPassword = "123"; // too short
+        String shortPassword = "123";
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.register("John", "Doe", email, shortPassword);
+            userService.register(
+                new CreateUserDTO(
+                    "John", "Doe", email, shortPassword
+                ));
         });
 
         assertEquals("Password must be at least 8 characters", exception.getMessage());

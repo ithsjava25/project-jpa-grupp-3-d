@@ -1,7 +1,7 @@
 package org.example.repository;
 
 import jakarta.persistence.EntityManagerFactory;
-import org.example.entity.Client;
+import org.example.entity.client.Client;
 
 import java.util.List;
 import java.util.UUID;

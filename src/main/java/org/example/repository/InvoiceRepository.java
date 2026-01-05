@@ -1,9 +1,8 @@
 package org.example.repository;
 
 import jakarta.persistence.EntityManagerFactory;
-import org.example.entity.Company;
-import org.example.entity.Invoice;
-import org.example.entity.InvoiceStatus;
+import org.example.entity.invoice.Invoice;
+import org.example.entity.invoice.InvoiceStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,9 +12,6 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
     protected InvoiceRepository(EntityManagerFactory emf) {
         super(emf, Invoice.class);
     }
-
-
-
 
     public Optional<Invoice> findByInvoiceNumber(String number) {
         return executeRead(em -> {
@@ -77,6 +73,4 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
                 .getResultList();
         });
     }
-
-
 }

@@ -1,9 +1,10 @@
 package org.example.service;
 
-import jakarta.persistence.EntityNotFoundException;
-import org.example.dto.ClientDTO;
-import org.example.entity.Client;
-import org.example.entity.Company;
+import org.example.entity.client.ClientDTO;
+import org.example.entity.client.Client;
+import org.example.entity.company.Company;
+import org.example.entity.client.CreateClientDTO;
+import org.example.entity.client.UpdateClientDTO;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 
@@ -25,57 +26,56 @@ public class ClientService {
     }
 
     public List<ClientDTO> getClientsByCompany(UUID companyId) {
-        List<Client> clients = clientRepository.findByCompanyId(companyId);
-        return clients.stream()
-            .map(this::toDto)
+        return clientRepository.findByCompanyId(companyId).stream()
+            .map(ClientDTO::fromEntity)
             .toList();
     }
 
-    public boolean isClientOwnedByCompany(UUID clientId, UUID companyId) {
-        return clientRepository.findById(clientId)
-            .map(client -> client.getCompany().getId().equals(companyId))
-            .orElse(false);
-    }
+    public ClientDTO createClient(CreateClientDTO dto) {
 
+        Company company = companyRepository.findById(dto.companyId())
+            .orElseThrow(() ->
+                new IllegalArgumentException("Company not found with id: " + dto.companyId())
+            );
 
-    public void validateClientAccess(UUID clientId, UUID companyId) {
-        if (!isClientOwnedByCompany(clientId, companyId)) {
-            throw new SecurityException("Client " + clientId + " does not belong to company " + companyId);
-        }
-    }
-
-
-    public Client getClientEntity(UUID clientId) {
-        return clientRepository.findById(clientId)
-            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
-    }
-
-    public ClientDTO createClient(UUID companyId,
-                                   String firstName,
-                                   String lastName,
-                                   String email,
-                                   String address,
-                                   String city,
-                                   String country,
-                                   String phoneNumber
-                     ) {
-
-        Company company = companyRepository.findById(companyId)
-            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
-
-        Client client = new Client();
-        client.setCompany(company);
-        client.setFirstName(firstName);
-        client.setLastName(lastName);
-        client.setEmail(email);
-        client.setAddress(address);
-        client.setCity(city);
-        client.setCountry(country);
-        client.setPhoneNumber(phoneNumber);
+        Client client = Client.fromDTO(dto, company);
 
         clientRepository.create(client);
 
-        return toDto(client);
+        return ClientDTO.fromEntity(client);
+    }
+
+    public ClientDTO updateClient(UpdateClientDTO dto) {
+
+        Client client = clientRepository.findById(dto.clientId())
+            .orElseThrow(() ->
+                new IllegalArgumentException("Client not found with id: " + dto.clientId())
+            );
+
+        if (dto.firstName() != null) {
+            client.setFirstName(dto.firstName());
+        }
+        if (dto.lastName() != null) {
+            client.setLastName(dto.lastName());
+        }
+        if (dto.email() != null) {
+            client.setEmail(dto.email());
+        }
+        if (dto.address() != null) {
+            client.setAddress(dto.address());
+        }
+        if (dto.city() != null) {
+            client.setCity(dto.city());
+        }
+        if (dto.country() != null) {
+            client.setCountry(dto.country());
+        }
+        if (dto.phoneNumber() != null) {
+            client.setPhoneNumber(dto.phoneNumber());
+        }
+
+        clientRepository.update(client);
+        return ClientDTO.fromEntity(client);
     }
 
 
@@ -84,51 +84,5 @@ public class ClientService {
             .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
 
         clientRepository.delete(client);
-    }
-
-
-
-
-
-    public ClientDTO update(
-        UUID clientId,
-        String firstName,
-        String lastName,
-        String email,
-        String address,
-        String city,
-        String country,
-        String phoneNumber) {
-
-        Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
-
-
-        if (firstName != null) client.setFirstName(firstName);
-        if (lastName != null) client.setLastName(lastName);
-        if (email != null) client.setEmail(email);
-        if (address != null) client.setAddress(address);
-        if (city != null) client.setCity(city);
-        if (country != null) client.setCountry(country);
-        if (phoneNumber != null) client.setPhoneNumber(phoneNumber);
-
-        clientRepository.update(client);
-        return toDto(client);
-    }
-
-    public ClientDTO toDto(Client client) {
-        return ClientDTO.builder()
-            .id(client.getId())
-            .companyId(client.getCompany().getId())
-            .firstName(client.getFirstName())
-            .lastName(client.getLastName())
-            .email(client.getEmail())
-            .address(client.getAddress())
-            .city(client.getCity())
-            .country(client.getCountry())
-            .phoneNumber(client.getPhoneNumber())
-            .createdAt(client.getCreatedAt())
-            .updatedAt(client.getUpdatedAt())
-            .build();
     }
 }
