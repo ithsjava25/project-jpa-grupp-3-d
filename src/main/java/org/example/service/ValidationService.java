@@ -1,6 +1,7 @@
 package org.example.service;
 
 import lombok.extern.slf4j.XSlf4j;
+import org.example.exception.BusinessRuleException;
 import org.example.exception.ValidationException;
 
 import java.util.regex.Pattern;
@@ -106,4 +107,31 @@ public class ValidationService {
         }
     }
 
+    public void validateNotNull(String fieldName, Object value) {
+        if (value == null) {
+            throw new ValidationException(fieldName, fieldName + " cannot be null", "FIELD_REQUIRED");
+        }
+    }
+
+    public void validatePositive(String fieldName, Number value) {
+        if (value == null) {
+            throw new ValidationException(fieldName, fieldName + " cannot be null", "FIELD_REQUIRED");
+        }
+
+        if (value.doubleValue() <= 0) {
+            throw new ValidationException(fieldName, fieldName + " must be positive", "VALUE_NOT_POSITIVE");
+        }
+    }
+
+    public void validateNotEmpty(String fieldName, String value) {
+        if (value == null || value.isBlank()) {
+            throw new ValidationException(fieldName, fieldName + " cannot be null or empty", "FIELD_REQUIRED");
+        }
+    }
+
+    public void validateBusinessRule(boolean condition, String message, String errorCode) {
+        if (!condition) {
+            throw new BusinessRuleException(message, errorCode);
+        }
+    }
 }
