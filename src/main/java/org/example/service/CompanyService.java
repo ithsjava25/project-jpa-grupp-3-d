@@ -3,6 +3,8 @@ package org.example.service;
 import lombok.extern.slf4j.Slf4j;
 import org.example.entity.company.*;
 import org.example.entity.user.User;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
@@ -14,29 +16,36 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
     private final CompanyUserRepository companyUserRepository;
     private final UserRepository userRepository;
+    private final ValidationService validationService;
 
-    public CompanyService(CompanyRepository companyRepository, CompanyUserRepository companyUserRepository, UserRepository userRepository) {
+    public CompanyService(CompanyRepository companyRepository,
+                          CompanyUserRepository companyUserRepository,
+                          UserRepository userRepository,
+                          ValidationService validationService) {
         this.companyRepository = companyRepository;
         this.companyUserRepository = companyUserRepository;
         this.userRepository = userRepository;
+        this.validationService = validationService;
     }
 
     public CompanyDTO create(UUID creatorUserId, CreateCompanyDTO dto) {
-        if (creatorUserId == null) throw new IllegalArgumentException("Creator userId cannot be null");
-        if (dto.orgNum() == null || dto.orgNum().isBlank()) throw new IllegalArgumentException("OrgNum cannot be null or blank");
-        if (dto.name() == null || dto.name().isBlank()) throw new IllegalArgumentException("Company name cannot be null or blank");
+        validationService.validateNotNull("creatorUserId", creatorUserId);
+        validationService.validateNotEmpty("orgNum", dto.orgNum());
+        validationService.validateNotEmpty("name", dto.name());
+        validationService.validateOrgNum(dto.orgNum());
+        validationService.validateCompanyName(dto.name());
 
         log.debug("Company creation started: orgNum={}, creatorUserId={}", dto.orgNum(), creatorUserId);
 
         User creator = userRepository.findById(creatorUserId)
             .orElseThrow(() -> {
                 log.warn("Company creation failed: Creator user not found with id={}", creatorUserId);
-                return new IllegalArgumentException("Creator user not found with id: " + creatorUserId);
+                return new EntityNotFoundException("User", creatorUserId, "USER_NOT_FOUND");
             });
 
         if (companyRepository.existsByOrgNum(dto.orgNum())) {
             log.warn("Company creation failed: Company with orgNum={} already exists", dto.orgNum());
-            throw new IllegalArgumentException("Company with orgNum " + dto.orgNum() + " already exists");
+            throw new BusinessRuleException("Company with orgNum " + dto.orgNum() + " already exists", "ORG_NUM_EXISTS");
         }
 
         Company company = Company.fromDTO(dto);
@@ -46,23 +55,21 @@ public class CompanyService {
         companyUserRepository.create(association);
 
         log.info("Company created successfully with id={} by userId={}", company.getId(), creatorUserId);
-
         return CompanyDTO.fromEntity(company);
     }
 
     public CompanyDTO update(UpdateCompanyDTO dto) {
-        if (dto.companyId() == null) throw new IllegalArgumentException("Company id cannot be null");
+        validationService.validateNotNull("companyId", dto.companyId());
 
         log.debug("Company update started for id={}", dto.companyId());
 
         Company company = companyRepository.findById(dto.companyId())
             .orElseThrow(() -> {
                 log.warn("Company update failed: Company not found with id={}", dto.companyId());
-                return new IllegalArgumentException("Company not found with id: " + dto.companyId());
+                return new EntityNotFoundException("Company", dto.companyId(), "COMPANY_NOT_FOUND");
             });
 
         company.update(dto);
-
         companyRepository.update(company);
 
         log.info("Company updated successfully with id={}", company.getId());
@@ -70,17 +77,21 @@ public class CompanyService {
     }
 
     public Company getCompanyEntity(UUID companyId) {
+        validationService.validateNotNull("companyId", companyId);
+
         return companyRepository.findById(companyId)
-            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
+            .orElseThrow(() -> new EntityNotFoundException("Company", companyId, "COMPANY_NOT_FOUND"));
     }
 
     public void deleteCompany(UUID companyId) {
+        validationService.validateNotNull("companyId", companyId);
+
         log.debug("Company deletion requested for companyId={}", companyId);
 
         Company company = companyRepository.findById(companyId)
             .orElseThrow(() -> {
                 log.warn("Company deletion failed: Company not found for id={}", companyId);
-                return new IllegalArgumentException("Company not found with id: " + companyId);
+                return new EntityNotFoundException("Company", companyId, "COMPANY_NOT_FOUND");
             });
 
         companyRepository.delete(company);
