@@ -1,12 +1,13 @@
 package org.example.service;
 
-import lombok.extern.slf4j.XSlf4j;
+
+import lombok.extern.slf4j.Slf4j;
 import org.example.exception.BusinessRuleException;
 import org.example.exception.ValidationException;
 
 import java.util.regex.Pattern;
 
-@XSlf4j
+@Slf4j
 public class ValidationService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
