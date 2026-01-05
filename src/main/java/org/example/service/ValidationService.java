@@ -75,4 +75,15 @@ public class ValidationService {
             throw new ValidationException(fieldName, fieldName + " contains invalid characters", "NAME_INVALID_CHARS");
         }
     }
+
+    public void validatePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isBlank()) {
+            return;
+        }
+
+        if (!PHONE_PATTERN.matcher(phoneNumber).matches()) {
+            throw new ValidationException("phoneNumber", "Invalid phone number format", "PHONE_INVALID");
+        }
+    }
+
 }
