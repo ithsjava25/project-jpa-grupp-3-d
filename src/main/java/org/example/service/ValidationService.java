@@ -1,13 +1,12 @@
 package org.example.service;
 
 
-import lombok.extern.slf4j.Slf4j;
 import org.example.exception.BusinessRuleException;
 import org.example.exception.ValidationException;
 
 import java.util.regex.Pattern;
 
-@Slf4j
+
 public class ValidationService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
@@ -73,7 +72,7 @@ public class ValidationService {
             throw new ValidationException(fieldName, fieldName + " cannot exceed 20 characters", "NAME_TOO_LONG");
         }
 
-        if (!name.matches("^[a-zA-Z\\s\\-']+$")) {
+        if (!name.matches("^[\\p{L}\\s\\-']+$")) {
             throw new ValidationException(fieldName, fieldName + " contains invalid characters", "NAME_INVALID_CHARS");
         }
     }
@@ -119,7 +118,10 @@ public class ValidationService {
             throw new ValidationException(fieldName, fieldName + " cannot be null", "FIELD_REQUIRED");
         }
 
-        if (value.doubleValue() <= 0) {
+    boolean isPositive = (value instanceof java.math.BigDecimal)
+    ? ((java.math.BigDecimal) value).compareTo(java.math.BigDecimal.ZERO) > 0
+    : value.doubleValue() > 0;
+    if (!isPositive) {
             throw new ValidationException(fieldName, fieldName + " must be positive", "VALUE_NOT_POSITIVE");
         }
     }

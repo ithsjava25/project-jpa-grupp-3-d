@@ -34,7 +34,7 @@ public class UserService {
 
         if (userRepository.existsByEmail(dto.email())) {
             log.debug("Registration failed: email already exists for email={}", LogUtil.maskEmail(dto.email()));
-            throw new BusinessRuleException("Email already registered: " + dto.email(), "EMAIL_ALREADY_EXISTS");
+            throw new BusinessRuleException("Email already registered: " + LogUtil.maskEmail(dto.email()), "EMAIL_ALREADY_EXISTS");
         }
 
         User user = User.fromDTO(dto);

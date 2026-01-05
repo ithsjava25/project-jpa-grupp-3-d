@@ -1,7 +1,7 @@
 package org.example;
 
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityNotFoundException;
+import org.example.exception.EntityNotFoundException;
 import org.example.entity.client.ClientDTO;
 import org.example.entity.company.*;
 import org.example.entity.client.CreateClientDTO;

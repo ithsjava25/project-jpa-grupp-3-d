@@ -2,8 +2,8 @@ package org.example.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceException;
+import org.example.exception.EntityNotFoundException;
+import org.example.exception.PersistenceException;
 
 import java.util.Optional;
 import java.util.function.Function;
