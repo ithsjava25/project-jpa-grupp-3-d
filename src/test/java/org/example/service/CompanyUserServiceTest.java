@@ -163,30 +163,6 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should return true if user associated with company")
-    void isUserAssociatedWithCompany_true() {
-        CompanyUserId id = new CompanyUserId(userId, companyId);
-        when(companyUserRepository.findById(id)).thenReturn(Optional.of(new CompanyUser()));
-
-        boolean result = companyUserService.isUserAssociatedWithCompany(userId, companyId);
-
-        assertTrue(result);
-        verify(companyUserRepository).findById(id);
-    }
-
-    @Test
-    @DisplayName("Should return false if user not associated with company")
-    void isUserAssociatedWithCompany_false() {
-        CompanyUserId id = new CompanyUserId(userId, companyId);
-        when(companyUserRepository.findById(id)).thenReturn(Optional.empty());
-
-        boolean result = companyUserService.isUserAssociatedWithCompany(userId, companyId);
-
-        assertFalse(result);
-        verify(companyUserRepository).findById(id);
-    }
-
-    @Test
     @DisplayName("Should return all users of a company")
     void getCompanyUsers_success() {
         List<CompanyUser> users = List.of(new CompanyUser(), new CompanyUser());

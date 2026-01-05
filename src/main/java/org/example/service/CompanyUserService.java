@@ -74,15 +74,6 @@ public class CompanyUserService {
         log.info("User {} removed from company {} successfully", userId, companyId);
     }
 
-    public boolean isUserAssociatedWithCompany(UUID userId, UUID companyId) {
-        if (userId == null || companyId == null) throw new IllegalArgumentException("User id and company id cannot be null");
-
-        log.debug("Check if user {} is associated with company {}", userId, companyId);
-        boolean associated = companyUserRepository.findById(new CompanyUserId(userId, companyId)).isPresent();
-        log.debug("User {} association with company {}: {}", userId, companyId, associated);
-        return associated;
-    }
-
     public List<CompanyUser> getCompanyUsers(UUID companyId) {
         if (companyId == null) throw new IllegalArgumentException("Company id cannot be null");
 
