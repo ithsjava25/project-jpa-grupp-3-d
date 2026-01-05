@@ -44,5 +44,17 @@ public class ValidationService {
         }
     }
 
+    public void validateCompanyName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new ValidationException("name", "Company name cannot be null or empty", "COMPANY_NAME_REQUIRED");
+        }
 
+        if (name.length() < 2) {
+            throw new ValidationException("name", "Company name must be at least 2 characters", "COMPANY_NAME_TOO_SHORT");
+        }
+
+        if (name.length() > 100) {
+            throw new ValidationException("name", "Company name cannot exceed 100 characters", "COMPANY_NAME_TOO_LONG");
+        }
+    }
 }
