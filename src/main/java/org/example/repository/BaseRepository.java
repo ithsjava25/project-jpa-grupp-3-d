@@ -2,12 +2,13 @@ package org.example.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceException;
 
 import java.util.Optional;
 import java.util.function.Function;
 
 public abstract class BaseRepository <T, ID> {
-
     private final EntityManagerFactory emf;
     protected final Class <T> entityClass;
 
@@ -25,7 +26,7 @@ public abstract class BaseRepository <T, ID> {
             return result;
         } catch (Exception e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw new RuntimeException("Transaction failed for " + entityClass.getSimpleName(), e);
+            throw new PersistenceException("Transaction failed for " + entityClass.getSimpleName(), e);
         } finally {
             em.close();
         }
@@ -34,8 +35,11 @@ public abstract class BaseRepository <T, ID> {
     protected <R> R executeRead(Function<EntityManager, R> action) {
         try (EntityManager em = emf.createEntityManager()) {
             return action.apply(em);
+        } catch (Exception e) {
+            throw new PersistenceException("Read operation failed for " + entityClass.getSimpleName(), e);
         }
     }
+
 
     public T create(T entity) {
         return runInTransaction(em -> {
@@ -54,18 +58,19 @@ public abstract class BaseRepository <T, ID> {
         runInTransaction(em -> {
             if (em.contains(entity)) {
                 em.remove(entity);
+                return null;
             } else {
                 Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
                 if (id == null) {
-                    throw new IllegalArgumentException("Cannot delete entity without an ID");
+                    throw new PersistenceException("Cannot delete entity without an ID");
                 }
                 T managedEntity = em.find(entityClass, id);
                 if (managedEntity == null) {
-                    throw new IllegalArgumentException(entityClass.getSimpleName() + " not found with id: " + id);
+                    throw new EntityNotFoundException(entityClass.getSimpleName(), id);
                 }
                 em.remove(managedEntity);
+                return null;
             }
-            return null;
         });
     }
 
@@ -83,7 +88,7 @@ public abstract class BaseRepository <T, ID> {
         runInTransaction(em -> {
             T entity = em.find(entityClass, id);
             if (entity == null) {
-                throw new IllegalArgumentException(entityClass.getSimpleName() + " not found with id: " + id);
+                throw new EntityNotFoundException(entityClass.getSimpleName(), id);
             }
             em.remove(entity);
             return null;
