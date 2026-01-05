@@ -1,12 +1,17 @@
 package org.example;
 
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityNotFoundException;
 import org.example.entity.client.ClientDTO;
 import org.example.entity.company.*;
 import org.example.entity.client.CreateClientDTO;
 import org.example.entity.client.UpdateClientDTO;
 import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
+import org.example.exception.ApplicationException;
+import org.example.exception.AuthenticationException;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.ValidationException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
@@ -15,6 +20,7 @@ import org.example.service.ClientService;
 import org.example.service.CompanyService;
 import org.example.service.CompanyUserService;
 import org.example.service.UserService;
+import org.example.service.ValidationService;
 import org.example.auth.AuthService;
 import org.example.util.JpaUtil;
 
@@ -40,6 +46,7 @@ public class CliApp {
     private final CompanyUserRepository companyUserRepository;
     private final ClientRepository clientRepository;
 
+    private final ValidationService validationService;
     private final UserService userService;
     private final AuthService authService;
     private final CompanyService companyService;
@@ -54,6 +61,7 @@ public class CliApp {
     private UserDTO currentUser;
     private CompanyDTO currentCompany;
 
+
     public CliApp() {
         this.emf = JpaUtil.getEntityManagerFactory();
         this.scanner = new Scanner(System.in);
@@ -64,12 +72,19 @@ public class CliApp {
         this.companyUserRepository = new CompanyUserRepository(emf);
         this.clientRepository = new ClientRepository(emf);
 
-        // Initialize services
-        this.userService = new UserService(userRepository);
-        this.authService = new AuthService(userRepository, userService);
-        this.companyService = new CompanyService(companyRepository, companyUserRepository, userRepository);
-        this.companyUserService = new CompanyUserService(userRepository, companyUserRepository, companyRepository);
-        this.clientService = new ClientService(clientRepository, companyRepository);
+        // Initialize services (in correct dependency order)
+        this.validationService = new ValidationService();
+        this.userService = new UserService(userRepository, validationService);
+        this.authService = new AuthService(userRepository, validationService);
+        this.companyService = new CompanyService(
+            companyRepository, companyUserRepository, userRepository, validationService
+        );
+        this.companyUserService = new CompanyUserService(
+            userRepository, companyUserRepository, companyRepository, validationService
+        );
+        this.clientService = new ClientService(
+            clientRepository, companyRepository, validationService
+        );
     }
 
     public void run() {
@@ -131,8 +146,17 @@ public class CliApp {
             currentUserId = currentUser.id();
             System.out.println("✓ Login successful! Welcome, " + currentUser.firstName() + " " + currentUser.lastName());
             return true;
-        } catch (Exception e) {
+        } catch (AuthenticationException e) {
             System.out.println("✗ Login failed: " + e.getMessage());
+            return false;
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage() + " (field: " + e.getFieldName() + ")");
+            return false;
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
             return false;
         }
     }
@@ -156,8 +180,17 @@ public class CliApp {
             currentUserId = currentUser.id();
             System.out.println("✓ Registration successful! Welcome, " + currentUser.firstName() + " " + currentUser.lastName());
             return true;
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage() + " (field: " + e.getFieldName() + ")");
+            return false;
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+            return false;
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+            return false;
         } catch (Exception e) {
-            System.out.println("✗ Registration failed: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
             return false;
         }
     }
@@ -226,8 +259,20 @@ public class CliApp {
             System.out.println("  You have been automatically associated with this company.");
             return true;
 
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage() + " (field: " + e.getFieldName() + ")");
+            return false;
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+            return false;
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+            return false;
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+            return false;
         } catch (Exception e) {
-            System.out.println("✗ Company creation failed: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
             return false;
         }
     }
@@ -263,8 +308,11 @@ public class CliApp {
             currentCompanyId = currentCompany.id();
             System.out.println("✓ Company selected: " + currentCompany.name() + " (" + currentCompany.orgNum() + ")");
             return true;
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+            return false;
         } catch (Exception e) {
-            System.out.println("✗ Failed to select company: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
             return false;
         }
     }
@@ -338,12 +386,15 @@ public class CliApp {
                     System.out.println("  ID: " + client.id());
                     System.out.println("  Name: " + client.firstName() + " " + client.lastName());
                     System.out.println("  Email: " + client.email());
+                    System.out.println("  Phone: " + client.phoneNumber());
                     System.out.println("  City: " + client.city());
                     System.out.println("  ---");
                 }
             }
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Failed to list clients: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
 
@@ -389,8 +440,14 @@ public class CliApp {
             System.out.println("  ID: " + client.id());
             System.out.println("  Name: " + client.firstName() + " " + client.lastName());
 
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage() + " (field: " + e.getFieldName() + ")");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Client creation failed: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
 
@@ -455,11 +512,18 @@ public class CliApp {
 
             System.out.println("✓ Client updated successfully!");
             System.out.println("  Name: " + updated.firstName() + " " + updated.lastName());
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage() + " (field: " + e.getFieldName() + ")");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("✗ Invalid input: " + e.getMessage());
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Client update failed: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
-
 
     private void deleteClient() {
         System.out.print("\nEnter Client ID to delete: ");
@@ -490,8 +554,14 @@ public class CliApp {
             } else {
                 System.out.println("Deletion cancelled.");
             }
+        } catch (IllegalArgumentException e) {
+            System.out.println("✗ Invalid client ID format.");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Client deletion failed: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
 
@@ -736,10 +806,13 @@ public class CliApp {
                     System.out.println("  ---");
                 }
             }
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Failed to list company users: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
+
 
     private void addUserToCompany() {
         System.out.print("\nEnter user email to invite: ");
@@ -748,11 +821,18 @@ public class CliApp {
         try {
             companyUserService.addUserToCompanyByEmail(currentCompanyId, email);
             System.out.println("✓ User added to company successfully!");
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage() + " (field: " + e.getFieldName() + ")");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Failed to add user: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
-
     private void removeUserFromCompany() {
         // List users first to make selection easier
         try {
@@ -781,12 +861,16 @@ public class CliApp {
                 System.out.println("✗ Cannot remove yourself from the current company.");
                 System.out.println("  Switch to another company first, or have another user remove you.");
                 return;
-                }
+            }
 
             companyUserService.deleteUserFromCompany(currentCompanyId, userId);
             System.out.println("✓ User removed from company successfully!");
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Failed to remove user: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
 
@@ -847,8 +931,14 @@ public class CliApp {
             currentCompany = companyService.update(updateDto);
 
             System.out.println("✓ Company updated successfully!");
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage() + " (field: " + e.getFieldName() + ")");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Error: " + e.getMessage());
+        } catch (ApplicationException e) {
+            System.out.println("✗ Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("✗ Company update failed: " + e.getMessage());
+            System.out.println("✗ An unexpected error occurred: " + e.getMessage());
         }
     }
 
@@ -874,5 +964,4 @@ public class CliApp {
             return -1;
         }
     }
-
 }
