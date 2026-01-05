@@ -5,6 +5,8 @@ import org.example.entity.client.Client;
 import org.example.entity.client.CreateClientDTO;
 import org.example.entity.client.UpdateClientDTO;
 import org.example.entity.company.Company;
+import org.example.exception.ValidationException;
+import org.example.exception.EntityNotFoundException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,8 +22,9 @@ import static org.mockito.Mockito.*;
 public class ClientServiceTest {
 
     private ClientRepository clientRepository;
-    private ClientService clientService;
     private CompanyRepository companyRepository;
+    private ValidationService validationService;
+    private ClientService clientService;
 
     private UUID companyId;
     private final Company company = new Company();
@@ -30,35 +33,59 @@ public class ClientServiceTest {
     void setUp() {
         clientRepository = mock(ClientRepository.class);
         companyRepository = mock(CompanyRepository.class);
-        clientService = new ClientService(clientRepository, companyRepository);
+        validationService = mock(ValidationService.class);
+        clientService = new ClientService(clientRepository, companyRepository, validationService);
         companyId = UUID.randomUUID();
+        company.setId(companyId);
     }
 
     @Test
     void shouldNotAllowClientCreationIfNoValidCompany() {
-        when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
-
         CreateClientDTO dto = new CreateClientDTO(
             companyId, "John", "Doe", "john.doe@email.com",
             "Client Street 1", "Country", "City", "0701234567"
         );
 
-        assertThrows(IllegalArgumentException.class, () -> clientService.createClient(dto));
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
+        doNothing().when(validationService).validatePersonName("firstName", "John");
+        doNothing().when(validationService).validatePersonName("lastName", "Doe");
+        doNothing().when(validationService).validateEmail("john.doe@email.com");
+        doNothing().when(validationService).validateAddress("address", "Client Street 1");
+        doNothing().when(validationService).validateAddress("city", "City");
+        doNothing().when(validationService).validateAddress("country", "Country");
+        doNothing().when(validationService).validatePhoneNumber("0701234567");
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> clientService.createClient(dto));
     }
 
     @Test
     void shouldAllowClientCreationIfValidCompany() {
-        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
-
         CreateClientDTO dto = new CreateClientDTO(
             companyId, "John", "Doe", "john.doe@email.com",
             "Client Street 1", "Country", "City", "0701234567"
         );
 
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
+        doNothing().when(validationService).validatePersonName("firstName", "John");
+        doNothing().when(validationService).validatePersonName("lastName", "Doe");
+        doNothing().when(validationService).validateEmail("john.doe@email.com");
+        doNothing().when(validationService).validateAddress("address", "Client Street 1");
+        doNothing().when(validationService).validateAddress("city", "City");
+        doNothing().when(validationService).validateAddress("country", "Country");
+        doNothing().when(validationService).validatePhoneNumber("0701234567");
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+
         assertDoesNotThrow(() -> clientService.createClient(dto));
 
         verify(clientRepository).create(any(Client.class));
+        verify(validationService).validateEmail("john.doe@email.com");
+        verify(validationService).validatePersonName("firstName", "John");
+        verify(validationService).validatePersonName("lastName", "Doe");
     }
+
 
     @Test
     void shouldUpdateClient() {
@@ -71,12 +98,17 @@ public class ClientServiceTest {
             .email("old@email.com")
             .build();
 
-        when(clientRepository.findById(clientId)).thenReturn(Optional.of(client));
-
         UpdateClientDTO dto = new UpdateClientDTO(
             clientId, "New", "Name", "new@email.com",
             null, null, null, null
         );
+
+        doNothing().when(validationService).validateNotNull("clientId", clientId);
+        doNothing().when(validationService).validatePersonName("firstName", "New");
+        doNothing().when(validationService).validatePersonName("lastName", "Name");
+        doNothing().when(validationService).validateEmail("new@email.com");
+
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(client));
 
         ClientDTO updated = clientService.updateClient(dto);
 
@@ -84,6 +116,7 @@ public class ClientServiceTest {
         assertEquals("Name", updated.lastName());
         assertEquals("new@email.com", updated.email());
         verify(clientRepository).update(client);
+        verify(validationService).validateEmail("new@email.com");
     }
 
     @Test
@@ -91,10 +124,12 @@ public class ClientServiceTest {
         UUID clientId = UUID.randomUUID();
         Client client = Client.builder().id(clientId).company(company).build();
 
+        doNothing().when(validationService).validateNotNull("clientId", clientId);
         when(clientRepository.findById(clientId)).thenReturn(Optional.of(client));
 
         assertDoesNotThrow(() -> clientService.deleteClient(clientId));
         verify(clientRepository).delete(client);
+        verify(validationService).validateNotNull("clientId", clientId);
     }
 
     @Test
@@ -102,6 +137,7 @@ public class ClientServiceTest {
         Client client1 = Client.builder().company(company).firstName("A").build();
         Client client2 = Client.builder().company(company).firstName("B").build();
 
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
         when(clientRepository.findByCompanyId(companyId)).thenReturn(List.of(client1, client2));
 
         List<ClientDTO> clients = clientService.getClientsByCompany(companyId);
@@ -109,25 +145,48 @@ public class ClientServiceTest {
         assertEquals(2, clients.size());
         assertEquals("A", clients.get(0).firstName());
         assertEquals("B", clients.get(1).firstName());
+        verify(validationService).validateNotNull("companyId", companyId);
     }
 
     @Test
     void shouldThrowOnUpdateNonExistentClient() {
         UUID clientId = UUID.randomUUID();
-        when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
-
         UpdateClientDTO dto = new UpdateClientDTO(
             clientId, "New", null, null, null, null, null, null
         );
 
-        assertThrows(Exception.class, () -> clientService.updateClient(dto));
+        doNothing().when(validationService).validateNotNull("clientId", clientId);
+        when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> clientService.updateClient(dto));
     }
 
     @Test
     void shouldThrowOnDeleteNonExistentClient() {
         UUID clientId = UUID.randomUUID();
+
+        doNothing().when(validationService).validateNotNull("clientId", clientId);
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
-        assertThrows(Exception.class, () -> clientService.deleteClient(clientId));
+        assertThrows(EntityNotFoundException.class, () -> clientService.deleteClient(clientId));
+    }
+
+    @Test
+    void shouldThrowValidationExceptionOnInvalidEmailWhenCreatingClient() {
+        CreateClientDTO dto = new CreateClientDTO(
+            companyId, "John", "Doe", "invalid-email",
+            "Address", "Country", "City", "0701234567"
+        );
+
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
+        doNothing().when(validationService).validatePersonName("firstName", "John");
+        doNothing().when(validationService).validatePersonName("lastName", "Doe");
+        doThrow(new ValidationException("email", "Invalid email format"))
+            .when(validationService).validateEmail("invalid-email");
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+
+        assertThrows(ValidationException.class, () -> clientService.createClient(dto));
+        verify(clientRepository, never()).create(any());
     }
 }

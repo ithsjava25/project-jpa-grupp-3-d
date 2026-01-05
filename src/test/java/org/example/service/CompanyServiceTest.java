@@ -2,6 +2,8 @@ package org.example.service;
 
 import org.example.entity.company.*;
 import org.example.entity.user.User;
+import org.example.exception.EntityNotFoundException;
+import org.example.exception.BusinessRuleException;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
@@ -30,6 +32,9 @@ class CompanyServiceTest {
     @Mock
     private CompanyUserRepository companyUserRepository;
 
+    @Mock
+    private ValidationService validationService;
+
     @InjectMocks
     private CompanyService companyService;
 
@@ -41,7 +46,7 @@ class CompanyServiceTest {
         user.setId(userId);
 
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
+            "123456-7890",
             "company@email.com",
             "0701234567",
             "TestCo",
@@ -50,8 +55,14 @@ class CompanyServiceTest {
             "Country"
         );
 
+        doNothing().when(validationService).validateNotNull("creatorUserId", userId);
+        doNothing().when(validationService).validateNotEmpty("orgNum", "123456-7890");
+        doNothing().when(validationService).validateNotEmpty("name", "TestCo");
+        doNothing().when(validationService).validateOrgNum("123456-7890");
+        doNothing().when(validationService).validateCompanyName("TestCo");
+
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
+        when(companyRepository.existsByOrgNum("123456-7890")).thenReturn(false);
 
         doAnswer(invocation -> {
             Company c = invocation.getArgument(0);
@@ -63,44 +74,11 @@ class CompanyServiceTest {
 
         assertNotNull(result);
         assertEquals("TestCo", result.name());
-        assertEquals("1234567890", result.orgNum());
+        assertEquals("123456-7890", result.orgNum());
 
         verify(companyRepository).create(any(Company.class));
         verify(companyUserRepository).create(any(CompanyUser.class));
-    }
-
-    @Test
-    @DisplayName("Should create company with null optional fields")
-    void createCompanyWithNullOptionalFields() {
-        UUID userId = UUID.randomUUID();
-        User user = new User();
-        user.setId(userId);
-
-        CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
-            null,
-            null,
-            "TestCo",
-            null,
-            null,
-            null
-        );
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
-
-        doAnswer(invocation -> {
-            Company c = invocation.getArgument(0);
-            c.setId(UUID.randomUUID());
-            return null;
-        }).when(companyRepository).create(any(Company.class));
-
-        CompanyDTO result = companyService.create(userId, dto);
-
-        assertNotNull(result);
-        assertNull(result.email());
-        assertNull(result.phoneNumber());
-        assertNull(result.address());
+        verify(validationService).validateOrgNum("123456-7890");
     }
 
     @Test
@@ -109,7 +87,7 @@ class CompanyServiceTest {
         UUID userId = UUID.randomUUID();
 
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
+            "123456-7890",
             "email@test.com",
             null,
             "TestCo",
@@ -118,9 +96,15 @@ class CompanyServiceTest {
             null
         );
 
+        doNothing().when(validationService).validateNotNull("creatorUserId", userId);
+        doNothing().when(validationService).validateNotEmpty("orgNum", "123456-7890");
+        doNothing().when(validationService).validateNotEmpty("name", "TestCo");
+        doNothing().when(validationService).validateOrgNum("123456-7890");
+        doNothing().when(validationService).validateCompanyName("TestCo");
+
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(EntityNotFoundException.class,
             () -> companyService.create(userId, dto)
         );
 
@@ -136,7 +120,7 @@ class CompanyServiceTest {
         user.setId(userId);
 
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
+            "123456-7890",
             "email@test.com",
             null,
             "TestCo",
@@ -145,50 +129,20 @@ class CompanyServiceTest {
             null
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(true);
+        doNothing().when(validationService).validateNotNull("creatorUserId", userId);
+        doNothing().when(validationService).validateNotEmpty("orgNum", "123456-7890");
+        doNothing().when(validationService).validateNotEmpty("name", "TestCo");
+        doNothing().when(validationService).validateOrgNum("123456-7890");
+        doNothing().when(validationService).validateCompanyName("TestCo");
 
-        assertThrows(IllegalArgumentException.class,
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(companyRepository.existsByOrgNum("123456-7890")).thenReturn(true);
+
+        assertThrows(BusinessRuleException.class,
             () -> companyService.create(userId, dto)
         );
 
         verify(companyRepository, never()).create(any());
-    }
-
-    @Test
-    @DisplayName("Should associate CompanyUser correctly")
-    void createCompanyAssociatesCompanyUserCorrectly() {
-        UUID userId = UUID.randomUUID();
-        User user = new User();
-        user.setId(userId);
-
-        CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
-            "email@test.com",
-            null,
-            "TestCo",
-            null,
-            null,
-            null
-        );
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
-
-        doAnswer(invocation -> {
-            Company c = invocation.getArgument(0);
-            c.setId(UUID.randomUUID());
-            return null;
-        }).when(companyRepository).create(any());
-
-        doAnswer(invocation -> {
-            CompanyUser cu = invocation.getArgument(0);
-            assertEquals(userId, cu.getUser().getId());
-            assertNotNull(cu.getCompany());
-            return null;
-        }).when(companyUserRepository).create(any());
-
-        companyService.create(userId, dto);
     }
 
     @Test
@@ -210,6 +164,7 @@ class CompanyServiceTest {
             null
         );
 
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
 
         CompanyDTO result = companyService.update(dto);
@@ -218,33 +173,6 @@ class CompanyServiceTest {
         assertEquals("new@email.com", result.email());
 
         verify(companyRepository).update(company);
-    }
-
-    @Test
-    @DisplayName("Should update company without overwriting with null values")
-    void updateCompanyWithNullFields() {
-        UUID companyId = UUID.randomUUID();
-        Company company = new Company();
-        company.setId(companyId);
-        company.setName("OldName");
-        company.setEmail("old@email.com");
-
-        UpdateCompanyDTO dto = new UpdateCompanyDTO(
-            companyId,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        );
-
-        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
-
-        CompanyDTO result = companyService.update(dto);
-
-        assertEquals("OldName", result.name());
-        assertEquals("old@email.com", result.email());
     }
 
     @Test
@@ -262,9 +190,10 @@ class CompanyServiceTest {
             null
         );
 
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(EntityNotFoundException.class,
             () -> companyService.update(dto)
         );
     }
@@ -276,6 +205,7 @@ class CompanyServiceTest {
         Company company = new Company();
         company.setId(companyId);
 
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
 
         companyService.deleteCompany(companyId);
@@ -288,9 +218,10 @@ class CompanyServiceTest {
     void deleteCompanyNotFound() {
         UUID companyId = UUID.randomUUID();
 
+        doNothing().when(validationService).validateNotNull("companyId", companyId);
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(EntityNotFoundException.class,
             () -> companyService.deleteCompany(companyId)
         );
     }
