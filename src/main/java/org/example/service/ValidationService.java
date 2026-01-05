@@ -57,4 +57,22 @@ public class ValidationService {
             throw new ValidationException("name", "Company name cannot exceed 20 characters", "COMPANY_NAME_TOO_LONG");
         }
     }
+
+    public void validatePersonName(String fieldName, String name) {
+        if (name == null || name.isBlank()) {
+            throw new ValidationException(fieldName, fieldName + " cannot be null or empty", "NAME_REQUIRED");
+        }
+
+        if (name.length() < 2) {
+            throw new ValidationException(fieldName, fieldName + " must be at least 2 characters", "NAME_TOO_SHORT");
+        }
+
+        if (name.length() > 20) {
+            throw new ValidationException(fieldName, fieldName + " cannot exceed 20 characters", "NAME_TOO_LONG");
+        }
+
+        if (!name.matches("^[a-zA-Z\\s\\-']+$")) {
+            throw new ValidationException(fieldName, fieldName + " contains invalid characters", "NAME_INVALID_CHARS");
+        }
+    }
 }
