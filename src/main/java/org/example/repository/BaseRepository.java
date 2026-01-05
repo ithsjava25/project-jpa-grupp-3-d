@@ -58,7 +58,6 @@ public abstract class BaseRepository <T, ID> {
         runInTransaction(em -> {
             if (em.contains(entity)) {
                 em.remove(entity);
-                return null;
             } else {
                 Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
                 if (id == null) {
@@ -66,11 +65,11 @@ public abstract class BaseRepository <T, ID> {
                 }
                 T managedEntity = em.find(entityClass, id);
                 if (managedEntity == null) {
-                    throw new EntityNotFoundException(entityClass.getSimpleName(), id);
+                    throw new EntityNotFoundException(entityClass.getSimpleName() + " not found with id: " + id);
                 }
                 em.remove(managedEntity);
-                return null;
             }
+            return null;
         });
     }
 
@@ -88,7 +87,7 @@ public abstract class BaseRepository <T, ID> {
         runInTransaction(em -> {
             T entity = em.find(entityClass, id);
             if (entity == null) {
-                throw new EntityNotFoundException(entityClass.getSimpleName(), id);
+                throw new EntityNotFoundException(entityClass.getSimpleName() + " not found with id: " + id);
             }
             em.remove(entity);
             return null;
