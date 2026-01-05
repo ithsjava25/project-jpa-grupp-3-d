@@ -65,7 +65,7 @@ public abstract class BaseRepository <T, ID> {
                 }
                 T managedEntity = em.find(entityClass, id);
                 if (managedEntity == null) {
-                    throw new EntityNotFoundException(entityClass.getSimpleName() + " not found with id: " + id);
+                    throw new EntityNotFoundException(entityClass.getSimpleName(), id);
                 }
                 em.remove(managedEntity);
             }
@@ -87,7 +87,7 @@ public abstract class BaseRepository <T, ID> {
         runInTransaction(em -> {
             T entity = em.find(entityClass, id);
             if (entity == null) {
-                throw new EntityNotFoundException(entityClass.getSimpleName() + " not found with id: " + id);
+                throw new EntityNotFoundException(entityClass.getSimpleName(), id);
             }
             em.remove(entity);
             return null;
