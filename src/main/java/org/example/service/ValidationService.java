@@ -33,4 +33,16 @@ public class ValidationService {
             throw new ValidationException("password", "Password must be at least 8 characters", "PASSWORD_TOO_SHORT");
         }
     }
+
+    public void validateOrgNum(String orgNum) {
+        if (orgNum == null || orgNum.isBlank()) {
+            throw new ValidationException("orgNum", "Organization number cannot be null or empty", "ORG_NUM_REQUIRED");
+        }
+
+        if (!ORG_NUM_PATTERN.matcher(orgNum).matches()) {
+            throw new ValidationException("orgNum", "Invalid organization number format. Expected: 123456-7890", "ORG_NUM_INVALID");
+        }
+    }
+
+
 }
