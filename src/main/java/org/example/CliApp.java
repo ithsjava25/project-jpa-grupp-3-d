@@ -255,7 +255,7 @@ public class CliApp {
             }
 
             Company selectedCompany = userCompanies.get(choice - 1).getCompany();
-            currentCompany = companyService.toDto(selectedCompany);
+            currentCompany = CompanyDTO.fromEntity(selectedCompany);
             currentCompanyId = currentCompany.id();
             System.out.println("✓ Company selected: " + currentCompany.name() + " (" + currentCompany.orgNum() + ")");
             return true;
@@ -428,7 +428,7 @@ public class CliApp {
             System.out.print("Phone Number [" + (client.getPhoneNumber() != null ? client.getPhoneNumber() : "") + "]: ");
             String phoneNumber = scanner.nextLine().trim();
 
-            ClientDTO updated = clientService.update(
+            ClientDTO updated = clientService.updateClient(
                 clientId,
                 firstName.isEmpty() ? null : firstName,
                 lastName.isEmpty() ? null : lastName,

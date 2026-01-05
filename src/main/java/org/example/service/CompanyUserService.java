@@ -1,5 +1,6 @@
 package org.example.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.entity.Company;
 import org.example.entity.User;
 import org.example.entity.CompanyUser;
@@ -7,10 +8,12 @@ import org.example.entity.CompanyUserId;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
+import org.example.util.LogUtil;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 public class CompanyUserService {
     private final UserRepository userRepository;
     private final CompanyUserRepository companyUserRepository;
@@ -23,45 +26,75 @@ public class CompanyUserService {
         this.companyRepository = companyRepository;
     }
 
-
     public void addUserToCompanyByEmail(UUID companyId, String email) {
+        if (companyId == null) throw new IllegalArgumentException("Company id cannot be null");
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("Email cannot be null or blank");
+
+        log.debug("Add user to company requested: companyId={}, email={}", companyId, LogUtil.maskEmail(email));
+
         Company company = companyRepository.findById(companyId)
-            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
+            .orElseThrow(() -> {
+                log.warn("Add user failed: Company not found with id={}", companyId);
+                return new IllegalArgumentException("Company not found with id: " + companyId);
+            });
 
         User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+            .orElseThrow(() -> {
+                log.warn("Add user failed: User not found with email={}", LogUtil.maskEmail(email));
+                return new IllegalArgumentException("User not found with email: " + email);
+            });
 
-        UUID userId = user.getId();
+        CompanyUserId id = new CompanyUserId(user.getId(), companyId);
 
-        // Check if association already exists
-        CompanyUserId id = new CompanyUserId(userId, companyId);
         if (companyUserRepository.findById(id).isPresent()) {
+            log.warn("Add user failed: User {} already associated with company {}", user.getId(), companyId);
             throw new IllegalArgumentException("User is already associated with this company");
         }
 
         CompanyUser association = new CompanyUser(user, company);
         companyUserRepository.create(association);
+
+        log.info("User {} added to company {} successfully", user.getId(), companyId);
     }
 
     public void deleteUserFromCompany(UUID companyId, UUID userId) {
+        if (companyId == null || userId == null) throw new IllegalArgumentException("Company id and user id cannot be null");
+
+        log.debug("Delete user from company requested: companyId={}, userId={}", companyId, userId);
+
         CompanyUserId id = new CompanyUserId(userId, companyId);
 
         CompanyUser companyUser = companyUserRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User is not part of company"));
+            .orElseThrow(() -> {
+                log.warn("Delete user failed: User {} is not part of company {}", userId, companyId);
+                return new IllegalArgumentException("User is not part of company");
+            });
 
         companyUserRepository.delete(companyUser);
+
+        log.info("User {} removed from company {} successfully", userId, companyId);
     }
 
     public boolean isUserAssociatedWithCompany(UUID userId, UUID companyId) {
-        CompanyUserId id = new CompanyUserId(userId, companyId);
-        return companyUserRepository.findById(id).isPresent();
+        if (userId == null || companyId == null) throw new IllegalArgumentException("User id and company id cannot be null");
+
+        log.debug("Check if user {} is associated with company {}", userId, companyId);
+        boolean associated = companyUserRepository.findById(new CompanyUserId(userId, companyId)).isPresent();
+        log.debug("User {} association with company {}: {}", userId, companyId, associated);
+        return associated;
     }
 
     public List<CompanyUser> getCompanyUsers(UUID companyId) {
+        if (companyId == null) throw new IllegalArgumentException("Company id cannot be null");
+
+        log.debug("Fetching all users for company {}", companyId);
         return companyUserRepository.findByCompanyId(companyId);
     }
 
     public List<CompanyUser> getUserCompanies(UUID userId) {
+        if (userId == null) throw new IllegalArgumentException("User id cannot be null");
+
+        log.debug("Fetching all companies for user {}", userId);
         return companyUserRepository.findByUserId(userId);
     }
 }

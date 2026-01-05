@@ -3,10 +3,8 @@ package org.example.repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-
 
 public abstract class BaseRepository <T, ID> {
 
@@ -57,7 +55,6 @@ public abstract class BaseRepository <T, ID> {
             if (em.contains(entity)) {
                 em.remove(entity);
             } else {
-                // Entity is detached, fetch it by ID within the transaction
                 Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
                 if (id == null) {
                     throw new IllegalArgumentException("Cannot delete entity without an ID");
@@ -76,10 +73,20 @@ public abstract class BaseRepository <T, ID> {
         return executeRead(em -> Optional.ofNullable(em.find(entityClass, id)));
     }
 
-    public List<T> findAll() {
+    public boolean existsById(ID id) {
         return executeRead(em ->
-            em.createQuery("SELECT e FROM " + entityClass.getSimpleName() + " e", entityClass)
-                .getResultList()
+            em.find(entityClass, id) != null
         );
+    }
+
+    public void deleteById(ID id) {
+        runInTransaction(em -> {
+            T entity = em.find(entityClass, id);
+            if (entity == null) {
+                throw new IllegalArgumentException(entityClass.getSimpleName() + " not found with id: " + id);
+            }
+            em.remove(entity);
+            return null;
+        });
     }
 }

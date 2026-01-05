@@ -1,13 +1,10 @@
-package org.example;
-
+package org.example.service;
 
 import org.example.dto.UserDTO;
 import org.example.entity.User;
 import org.example.repository.UserRepository;
-import org.example.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 
 import java.util.Optional;
 import java.util.UUID;
@@ -114,7 +111,7 @@ public class UserServiceTest {
     @Test
     void testRegisterUserWithInvalidPassword() {
         String email = "test@email.com";
-        String shortPassword = "123"; // too short
+        String shortPassword = "123";
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             userService.register("John", "Doe", email, shortPassword);
