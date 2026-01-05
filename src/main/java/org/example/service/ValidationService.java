@@ -91,8 +91,18 @@ public class ValidationService {
             return;
         }
 
-        if (address.length() > 200) {
-            throw new ValidationException(fieldName, fieldName + " cannot exceed 200 characters", "ADDRESS_TOO_LONG");
+        if (address.length() > 70) {
+            throw new ValidationException(fieldName, fieldName + " cannot exceed 70 characters", "ADDRESS_TOO_LONG");
+        }
+    }
+
+    public void validateInvoiceNumber(String invoiceNumber) {
+        if (invoiceNumber == null || invoiceNumber.isBlank()) {
+            throw new ValidationException("invoiceNumber", "Invoice number cannot be null or empty", "INVOICE_NUMBER_REQUIRED");
+        }
+
+        if (!invoiceNumber.matches("^INV-\\d{4}-\\d{4}$")) {
+            throw new ValidationException("invoiceNumber", "Invoice number must be in format INV-YYYY-XXXX", "INVOICE_NUMBER_INVALID");
         }
     }
 
