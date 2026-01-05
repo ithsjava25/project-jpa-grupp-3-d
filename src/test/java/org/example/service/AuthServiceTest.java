@@ -7,34 +7,39 @@ import org.example.entity.user.User;
 import org.example.exception.AuthenticationException;
 import org.example.exception.ValidationException;
 import org.example.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class AuthServiceTest {
+@ExtendWith(MockitoExtension.class)
+class AuthServiceTest {
 
+    @Mock
     private UserRepository userRepository;
+
+    @Mock
     private ValidationService validationService;
+
+    @InjectMocks
     private AuthService authService;
 
-    @BeforeEach
-    void setUp() {
-        userRepository = mock(UserRepository.class);
-        validationService = mock(ValidationService.class);
-        authService = new AuthService(userRepository, validationService);
-    }
-
     @Test
-    void testAuthenticateUserSuccess() {
+    @DisplayName("Should authenticate user successfully with valid credentials")
+    void authenticateUser_Success() {
         String email = "user@email.com";
         String rawPassword = "password";
         User user = new User();
         user.setEmail(email);
-        user.setId(java.util.UUID.randomUUID());
+        user.setId(UUID.randomUUID());
         user.setPassword(PasswordEncoder.hash(rawPassword));
 
         doNothing().when(validationService).validateNotEmpty("email", email);
@@ -52,11 +57,12 @@ public class AuthServiceTest {
     }
 
     @Test
-    void testAuthenticateUserInvalidPassword() {
+    @DisplayName("Should throw AuthenticationException with invalid password")
+    void authenticateUser_InvalidPassword_ThrowsAuthenticationException() {
         String email = "user@email.com";
         User user = new User();
         user.setEmail(email);
-        user.setId(java.util.UUID.randomUUID());
+        user.setId(UUID.randomUUID());
         user.setPassword(PasswordEncoder.hash("correctpassword"));
 
         doNothing().when(validationService).validateNotEmpty("email", email);
@@ -72,7 +78,8 @@ public class AuthServiceTest {
     }
 
     @Test
-    void testAuthenticateUserNotFound() {
+    @DisplayName("Should throw AuthenticationException when user not found")
+    void authenticateUser_UserNotFound_ThrowsAuthenticationException() {
         String email = "unknown@email.com";
 
         doNothing().when(validationService).validateNotEmpty("email", email);
@@ -88,7 +95,8 @@ public class AuthServiceTest {
     }
 
     @Test
-    void testAuthenticateUserInvalidEmailFormat() {
+    @DisplayName("Should throw ValidationException with invalid email format")
+    void authenticateUser_InvalidEmailFormat_ThrowsValidationException() {
         String invalidEmail = "not-an-email";
         String password = "password";
 
