@@ -53,8 +53,8 @@ public class ValidationService {
             throw new ValidationException("name", "Company name must be at least 2 characters", "COMPANY_NAME_TOO_SHORT");
         }
 
-        if (name.length() > 100) {
-            throw new ValidationException("name", "Company name cannot exceed 100 characters", "COMPANY_NAME_TOO_LONG");
+        if (name.length() > 20) {
+            throw new ValidationException("name", "Company name cannot exceed 20 characters", "COMPANY_NAME_TOO_LONG");
         }
     }
 }
