@@ -23,4 +23,14 @@ public class ValidationService {
             throw new ValidationException("email", "Invalid email format: " + email, "EMAIL_INVALID");
         }
     }
+
+    public void validatePassword(String password) {
+        if (password == null || password.isBlank()) {
+            throw new ValidationException("password", "Password cannot be null or empty", "PASSWORD_REQUIRED");
+        }
+
+        if (password.length() < 8) {
+            throw new ValidationException("password", "Password must be at least 8 characters", "PASSWORD_TOO_SHORT");
+        }
+    }
 }
