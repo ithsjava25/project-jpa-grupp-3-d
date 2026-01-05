@@ -1,8 +1,8 @@
 package org.example.auth;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.dto.UserDTO;
-import org.example.entity.User;
+import org.example.entity.user.UserDTO;
+import org.example.entity.user.User;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
 import org.example.util.LogUtil;
@@ -38,6 +38,6 @@ public class AuthService {
         }
 
         log.info("Authentication successful for userId={}", user.getId());
-        return userService.toDto(user);
+        return UserDTO.fromEntity(user);
     }
 }

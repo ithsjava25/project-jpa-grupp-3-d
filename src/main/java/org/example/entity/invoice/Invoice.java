@@ -1,8 +1,9 @@
-package org.example.entity;
+package org.example.entity.invoice;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.dto.InvoiceDTO;
+import org.example.entity.company.Company;
+import org.example.entity.client.Client;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,6 +15,7 @@ import java.util.*;
 @Table (name="invoices")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -71,14 +73,28 @@ public class Invoice {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public static Invoice fromDTO(InvoiceDTO dto, Company company, Client client) {
-        Invoice invoice = new Invoice();
-        invoice.setCompany(company);
-        invoice.setClient(client);
-        invoice.setNumber(dto.number());
-        invoice.setDueDate(dto.dueDate());
-        invoice.setStatus(dto.status() != null ? dto.status() : InvoiceStatus.CREATED);
-        invoice.amount = dto.amount() != null ? dto.amount() : BigDecimal.ZERO;
+    public static Invoice fromDTO(CreateInvoiceDTO dto, Company company, Client client) {
+        Invoice invoice = Invoice.builder()
+            .company(company)
+            .client(client)
+            .number(dto.number())
+            .dueDate(dto.dueDate())
+            .status(InvoiceStatus.CREATED)
+            .invoiceItems(new ArrayList<>())
+            .amount(BigDecimal.ZERO)
+            .vatAmount(BigDecimal.ZERO)
+            .build();
+
+        if (dto.items() != null) {
+            dto.items().forEach(itemDTO -> {
+                InvoiceItem item = new InvoiceItem();
+                item.setQuantity(itemDTO.quantity());
+                item.setUnitPrice(itemDTO.unitPrice());
+                invoice.addItem(item);
+            });
+        }
+
+        invoice.recalcTotals();
         return invoice;
     }
 }

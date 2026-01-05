@@ -1,8 +1,8 @@
 package org.example.service;
 
 import org.example.auth.AuthService;
-import org.example.dto.UserDTO;
-import org.example.entity.User;
+import org.example.entity.user.UserDTO;
+import org.example.entity.user.User;
 import org.example.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

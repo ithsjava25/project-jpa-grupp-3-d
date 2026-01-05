@@ -1,7 +1,6 @@
-package org.example.dto;
+package org.example.entity.client;
 
 import lombok.Builder;
-import org.example.entity.Client;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

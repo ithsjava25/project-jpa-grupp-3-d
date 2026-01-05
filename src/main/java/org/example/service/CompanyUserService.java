@@ -1,10 +1,10 @@
 package org.example.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.entity.Company;
-import org.example.entity.User;
-import org.example.entity.CompanyUser;
-import org.example.entity.CompanyUserId;
+import org.example.entity.company.Company;
+import org.example.entity.user.User;
+import org.example.entity.company.CompanyUser;
+import org.example.entity.company.CompanyUserId;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
@@ -45,7 +45,6 @@ public class CompanyUserService {
             });
 
         CompanyUserId id = new CompanyUserId(user.getId(), companyId);
-
         if (companyUserRepository.findById(id).isPresent()) {
             log.warn("Add user failed: User {} already associated with company {}", user.getId(), companyId);
             throw new IllegalArgumentException("User is already associated with this company");
@@ -73,15 +72,6 @@ public class CompanyUserService {
         companyUserRepository.delete(companyUser);
 
         log.info("User {} removed from company {} successfully", userId, companyId);
-    }
-
-    public boolean isUserAssociatedWithCompany(UUID userId, UUID companyId) {
-        if (userId == null || companyId == null) throw new IllegalArgumentException("User id and company id cannot be null");
-
-        log.debug("Check if user {} is associated with company {}", userId, companyId);
-        boolean associated = companyUserRepository.findById(new CompanyUserId(userId, companyId)).isPresent();
-        log.debug("User {} association with company {}: {}", userId, companyId, associated);
-        return associated;
     }
 
     public List<CompanyUser> getCompanyUsers(UUID companyId) {

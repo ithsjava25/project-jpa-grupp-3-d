@@ -1,11 +1,10 @@
-package org.example.dto;
+package org.example.entity.invoice;
 
 import lombok.Builder;
-import org.example.entity.Invoice;
-import org.example.entity.InvoiceStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -17,10 +16,14 @@ public record InvoiceDTO(
     BigDecimal amount,
     LocalDateTime dueDate,
     LocalDateTime createdAt,
-    InvoiceStatus status
+    InvoiceStatus status,
+    List<InvoiceItemDTO> items
 ) {
-
     public static InvoiceDTO fromEntity(Invoice invoice) {
+        List<InvoiceItemDTO> itemDTOs = invoice.getInvoiceItems().stream()
+            .map(InvoiceItemDTO::fromEntity)
+            .toList();
+
         return InvoiceDTO.builder()
             .id(invoice.getId())
             .companyId(invoice.getCompany().getId())
@@ -30,6 +33,7 @@ public record InvoiceDTO(
             .dueDate(invoice.getDueDate())
             .createdAt(invoice.getCreatedAt())
             .status(invoice.getStatus())
+            .items(itemDTOs)
             .build();
     }
 }

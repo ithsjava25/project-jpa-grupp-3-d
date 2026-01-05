@@ -1,13 +1,14 @@
 package org.example.service;
 
-import org.example.dto.ClientDTO;
-import org.example.entity.Client;
-import org.example.entity.Company;
+import org.example.entity.client.ClientDTO;
+import org.example.entity.client.Client;
+import org.example.entity.client.CreateClientDTO;
+import org.example.entity.client.UpdateClientDTO;
+import org.example.entity.company.Company;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 
 import java.util.List;
 import java.util.Optional;
@@ -26,57 +27,36 @@ public class ClientServiceTest {
     private final Company company = new Company();
 
     @BeforeEach
-    void setUp(){
-        this.clientRepository = mock(ClientRepository.class);
-        this.companyRepository = mock(CompanyRepository.class);
-        this.clientService = new ClientService(clientRepository, companyRepository);
+    void setUp() {
+        clientRepository = mock(ClientRepository.class);
+        companyRepository = mock(CompanyRepository.class);
+        clientService = new ClientService(clientRepository, companyRepository);
         companyId = UUID.randomUUID();
     }
 
-
     @Test
     void shouldNotAllowClientCreationIfNoValidCompany() {
-        // mock company does NOT exist
-        when(companyRepository.findById(companyId))
-            .thenReturn(Optional.empty());
+        when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-
-        assertThrows(IllegalArgumentException.class, () ->
-            clientService.createClient(
-                companyId,
-                "John",
-                "Doe",
-                "john.doe@email.com",
-                "Client Street 1",
-                "City",
-                "Country",
-                "0701234567"
-            )
+        CreateClientDTO dto = new CreateClientDTO(
+            companyId, "John", "Doe", "john.doe@email.com",
+            "Client Street 1", "Country", "City", "0701234567"
         );
+
+        assertThrows(IllegalArgumentException.class, () -> clientService.createClient(dto));
     }
 
     @Test
     void shouldAllowClientCreationIfValidCompany() {
-        // mock valid company
-        when(companyRepository.findById(companyId))
-            .thenReturn(Optional.of(company));
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
 
-
-        // no exception expected
-        assertDoesNotThrow(() ->
-            clientService.createClient(
-                companyId,
-                "John",
-                "Doe",
-                "john.doe@email.com",
-                "Client Street 1",
-                "City",
-                "Country",
-                "0701234567"
-            )
+        CreateClientDTO dto = new CreateClientDTO(
+            companyId, "John", "Doe", "john.doe@email.com",
+            "Client Street 1", "Country", "City", "0701234567"
         );
 
-        // verify client was persisted
+        assertDoesNotThrow(() -> clientService.createClient(dto));
+
         verify(clientRepository).create(any(Client.class));
     }
 
@@ -93,10 +73,12 @@ public class ClientServiceTest {
 
         when(clientRepository.findById(clientId)).thenReturn(Optional.of(client));
 
-        ClientDTO updated = clientService.updateClient(
+        UpdateClientDTO dto = new UpdateClientDTO(
             clientId, "New", "Name", "new@email.com",
             null, null, null, null
         );
+
+        ClientDTO updated = clientService.updateClient(dto);
 
         assertEquals("New", updated.firstName());
         assertEquals("Name", updated.lastName());
@@ -134,9 +116,11 @@ public class ClientServiceTest {
         UUID clientId = UUID.randomUUID();
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
-        assertThrows(Exception.class, () ->
-            clientService.updateClient(clientId, "New", null, null, null, null, null, null)
+        UpdateClientDTO dto = new UpdateClientDTO(
+            clientId, "New", null, null, null, null, null, null
         );
+
+        assertThrows(Exception.class, () -> clientService.updateClient(dto));
     }
 
     @Test

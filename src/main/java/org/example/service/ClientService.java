@@ -1,9 +1,10 @@
 package org.example.service;
 
-import jakarta.persistence.EntityNotFoundException;
-import org.example.dto.ClientDTO;
-import org.example.entity.Client;
-import org.example.entity.Company;
+import org.example.entity.client.ClientDTO;
+import org.example.entity.client.Client;
+import org.example.entity.company.Company;
+import org.example.entity.client.CreateClientDTO;
+import org.example.entity.client.UpdateClientDTO;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 
@@ -30,61 +31,57 @@ public class ClientService {
             .toList();
     }
 
-    public ClientDTO createClient(UUID companyId,
-                                  String firstName,
-                                  String lastName,
-                                  String email,
-                                  String address,
-                                  String city,
-                                  String country,
-                                  String phoneNumber) {
+    public ClientDTO createClient(CreateClientDTO dto) {
 
-        Company company = companyRepository.findById(companyId)
-            .orElseThrow(() -> new IllegalArgumentException("Company not found with id: " + companyId));
+        Company company = companyRepository.findById(dto.companyId())
+            .orElseThrow(() ->
+                new IllegalArgumentException("Company not found with id: " + dto.companyId())
+            );
 
-        Client client = Client.builder()
-            .company(company)
-            .firstName(firstName)
-            .lastName(lastName)
-            .email(email)
-            .address(address)
-            .city(city)
-            .country(country)
-            .phoneNumber(phoneNumber)
-            .build();
+        Client client = Client.fromDTO(dto, company);
 
         clientRepository.create(client);
 
         return ClientDTO.fromEntity(client);
     }
 
-    public ClientDTO updateClient(UUID clientId,
-                                  String firstName,
-                                  String lastName,
-                                  String email,
-                                  String address,
-                                  String city,
-                                  String country,
-                                  String phoneNumber) {
+    public ClientDTO updateClient(UpdateClientDTO dto) {
 
-        Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
+        Client client = clientRepository.findById(dto.clientId())
+            .orElseThrow(() ->
+                new IllegalArgumentException("Client not found with id: " + dto.clientId())
+            );
 
-        if (firstName != null) client.setFirstName(firstName);
-        if (lastName != null) client.setLastName(lastName);
-        if (email != null) client.setEmail(email);
-        if (address != null) client.setAddress(address);
-        if (city != null) client.setCity(city);
-        if (country != null) client.setCountry(country);
-        if (phoneNumber != null) client.setPhoneNumber(phoneNumber);
+        if (dto.firstName() != null) {
+            client.setFirstName(dto.firstName());
+        }
+        if (dto.lastName() != null) {
+            client.setLastName(dto.lastName());
+        }
+        if (dto.email() != null) {
+            client.setEmail(dto.email());
+        }
+        if (dto.address() != null) {
+            client.setAddress(dto.address());
+        }
+        if (dto.city() != null) {
+            client.setCity(dto.city());
+        }
+        if (dto.country() != null) {
+            client.setCountry(dto.country());
+        }
+        if (dto.phoneNumber() != null) {
+            client.setPhoneNumber(dto.phoneNumber());
+        }
 
         clientRepository.update(client);
         return ClientDTO.fromEntity(client);
     }
 
+
     public void deleteClient(UUID clientId) {
         Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new EntityNotFoundException("Client not found with id: " + clientId));
+            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
 
         clientRepository.delete(client);
     }

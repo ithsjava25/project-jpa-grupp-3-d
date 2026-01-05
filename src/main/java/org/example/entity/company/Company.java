@@ -1,7 +1,9 @@
-package org.example.entity;
+package org.example.entity.company;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.entity.client.Client;
+import org.example.entity.invoice.Invoice;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
+@ToString(exclude = {"clients", "invoices", "companyUsers"})
 public class Company {
 
     @Id
@@ -50,28 +53,34 @@ public class Company {
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    @ToString.Exclude
     private Set<Client> clients = new HashSet<>();
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    @ToString.Exclude
     private Set<Invoice> invoices = new HashSet<>();
 
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
-    @ToString.Exclude
     private Set<CompanyUser> companyUsers = new HashSet<>();
 
-    public static Company fromDto(org.example.dto.CompanyDTO dto) {
+    public static Company fromDTO(CreateCompanyDTO dto) {
         return Company.builder()
-            .name(dto.name())
             .orgNum(dto.orgNum())
             .email(dto.email())
             .phoneNumber(dto.phoneNumber())
+            .name(dto.name())
             .address(dto.address())
             .city(dto.city())
             .country(dto.country())
             .build();
+    }
+
+    public void update(UpdateCompanyDTO dto) {
+        if (dto.email() != null) this.email = dto.email();
+        if (dto.phoneNumber() != null) this.phoneNumber = dto.phoneNumber();
+        if (dto.name() != null) this.name = dto.name();
+        if (dto.address() != null) this.address = dto.address();
+        if (dto.city() != null) this.city = dto.city();
+        if (dto.country() != null) this.country = dto.country();
     }
 }

@@ -1,8 +1,8 @@
-package org.example.entity;
+package org.example.entity.client;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.example.dto.ClientDTO;
+import org.example.entity.company.Company;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -48,7 +48,7 @@ public class Client {
     private LocalDateTime updatedAt;
 
 
-    public static Client fromDTO(ClientDTO dto, Company company) {
+    public static Client fromDTO(CreateClientDTO dto, Company company) {
         return Client.builder()
             .company(company)
             .firstName(dto.firstName())

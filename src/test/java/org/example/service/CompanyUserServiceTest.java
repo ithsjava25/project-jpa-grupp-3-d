@@ -1,9 +1,9 @@
 package org.example.service;
 
-import org.example.entity.Company;
-import org.example.entity.CompanyUser;
-import org.example.entity.CompanyUserId;
-import org.example.entity.User;
+import org.example.entity.company.Company;
+import org.example.entity.company.CompanyUser;
+import org.example.entity.company.CompanyUserId;
+import org.example.entity.user.User;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
@@ -160,30 +160,6 @@ class CompanyUserServiceTest {
         assertTrue(ex.getMessage().contains("User is not part of company"));
         verify(companyUserRepository).findById(id);
         verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
-    }
-
-    @Test
-    @DisplayName("Should return true if user associated with company")
-    void isUserAssociatedWithCompany_true() {
-        CompanyUserId id = new CompanyUserId(userId, companyId);
-        when(companyUserRepository.findById(id)).thenReturn(Optional.of(new CompanyUser()));
-
-        boolean result = companyUserService.isUserAssociatedWithCompany(userId, companyId);
-
-        assertTrue(result);
-        verify(companyUserRepository).findById(id);
-    }
-
-    @Test
-    @DisplayName("Should return false if user not associated with company")
-    void isUserAssociatedWithCompany_false() {
-        CompanyUserId id = new CompanyUserId(userId, companyId);
-        when(companyUserRepository.findById(id)).thenReturn(Optional.empty());
-
-        boolean result = companyUserService.isUserAssociatedWithCompany(userId, companyId);
-
-        assertFalse(result);
-        verify(companyUserRepository).findById(id);
     }
 
     @Test

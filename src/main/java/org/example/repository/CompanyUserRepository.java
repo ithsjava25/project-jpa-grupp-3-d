@@ -1,8 +1,8 @@
 package org.example.repository;
 
 import jakarta.persistence.EntityManagerFactory;
-import org.example.entity.CompanyUser;
-import org.example.entity.CompanyUserId;
+import org.example.entity.company.CompanyUser;
+import org.example.entity.company.CompanyUserId;
 
 import java.util.List;
 import java.util.UUID;
