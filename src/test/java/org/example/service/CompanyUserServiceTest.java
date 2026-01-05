@@ -65,7 +65,7 @@ class CompanyUserServiceTest {
 
     @Test
     @DisplayName("Should add user to company successfully")
-    void addUserToCompanyByEmail_success() {
+    void addUserToCompanyByEmail_Success() {
         doNothing().when(validationService).validateNotNull("companyId", companyId);
         doNothing().when(validationService).validateNotEmpty("email", email);
         doNothing().when(validationService).validateEmail(email);
@@ -86,8 +86,8 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception if company not found")
-    void addUserToCompanyByEmail_companyNotFound() {
+    @DisplayName("Should throw EntityNotFoundException if company not found")
+    void addUserToCompanyByEmail_CompanyNotFound_ThrowsEntityNotFoundException() {
         doNothing().when(validationService).validateNotNull("companyId", companyId);
         doNothing().when(validationService).validateNotEmpty("email", email);
         doNothing().when(validationService).validateEmail(email);
@@ -102,8 +102,8 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception if user not found")
-    void addUserToCompanyByEmail_userNotFound() {
+    @DisplayName("Should throw EntityNotFoundException if user not found")
+    void addUserToCompanyByEmail_UserNotFound_ThrowsEntityNotFoundException() {
         doNothing().when(validationService).validateNotNull("companyId", companyId);
         doNothing().when(validationService).validateNotEmpty("email", email);
         doNothing().when(validationService).validateEmail(email);
@@ -120,8 +120,8 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception if user already associated")
-    void addUserToCompanyByEmail_userAlreadyAssociated() {
+    @DisplayName("Should throw BusinessRuleException if user already associated")
+    void addUserToCompanyByEmail_UserAlreadyAssociated_ThrowsBusinessRuleException() {
         CompanyUserId id = new CompanyUserId(userId, companyId);
 
         doNothing().when(validationService).validateNotNull("companyId", companyId);
@@ -143,7 +143,7 @@ class CompanyUserServiceTest {
 
     @Test
     @DisplayName("Should delete user from company successfully")
-    void deleteUserFromCompany_success() {
+    void deleteUserFromCompany_Success() {
         CompanyUserId id = new CompanyUserId(userId, companyId);
         CompanyUser cu = new CompanyUser();
 
@@ -158,8 +158,8 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception if user not part of company")
-    void deleteUserFromCompany_notFound() {
+    @DisplayName("Should throw BusinessRuleException if user not part of company")
+    void deleteUserFromCompany_UserNotPartOfCompany_ThrowsBusinessRuleException() {
         CompanyUserId id = new CompanyUserId(userId, companyId);
 
         doNothing().when(validationService).validateNotNull("companyId", companyId);
@@ -176,7 +176,7 @@ class CompanyUserServiceTest {
 
     @Test
     @DisplayName("Should return all users of a company")
-    void getCompanyUsers_success() {
+    void getCompanyUsers_Success() {
         List<CompanyUser> users = List.of(new CompanyUser(), new CompanyUser());
 
         doNothing().when(validationService).validateNotNull("companyId", companyId);
@@ -192,7 +192,7 @@ class CompanyUserServiceTest {
 
     @Test
     @DisplayName("Should return all companies of a user")
-    void getUserCompanies_success() {
+    void getUserCompanies_Success() {
         List<CompanyUser> companies = List.of(new CompanyUser(), new CompanyUser());
 
         doNothing().when(validationService).validateNotNull("userId", userId);
