@@ -4,6 +4,7 @@ import org.example.entity.company.Company;
 import org.example.entity.company.CompanyUser;
 import org.example.entity.company.CompanyUserId;
 import org.example.entity.user.User;
+import org.example.exception.ValidationException;
 import org.example.exception.EntityNotFoundException;
 import org.example.exception.BusinessRuleException;
 import org.example.repository.CompanyRepository;
