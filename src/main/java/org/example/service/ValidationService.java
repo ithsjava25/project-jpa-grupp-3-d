@@ -86,4 +86,14 @@ public class ValidationService {
         }
     }
 
+    public void validateAddress(String fieldName, String address) {
+        if (address == null || address.isBlank()) {
+            return;
+        }
+
+        if (address.length() > 200) {
+            throw new ValidationException(fieldName, fieldName + " cannot exceed 200 characters", "ADDRESS_TOO_LONG");
+        }
+    }
+
 }
