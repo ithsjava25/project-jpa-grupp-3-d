@@ -5,19 +5,18 @@ import org.example.entity.client.ClientDTO;
 import org.example.entity.company.*;
 import org.example.entity.client.CreateClientDTO;
 import org.example.entity.client.UpdateClientDTO;
+import org.example.entity.invoice.*;
 import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
-import org.example.repository.ClientRepository;
-import org.example.repository.CompanyRepository;
-import org.example.repository.CompanyUserRepository;
-import org.example.repository.UserRepository;
-import org.example.service.ClientService;
-import org.example.service.CompanyService;
-import org.example.service.CompanyUserService;
-import org.example.service.UserService;
+import org.example.repository.*;
+import org.example.service.*;
 import org.example.auth.AuthService;
 import org.example.util.JpaUtil;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
@@ -39,12 +38,14 @@ public class CliApp {
     private final CompanyRepository companyRepository;
     private final CompanyUserRepository companyUserRepository;
     private final ClientRepository clientRepository;
+    private final InvoiceRepository invoiceRepository;
 
     private final UserService userService;
     private final AuthService authService;
     private final CompanyService companyService;
     private final CompanyUserService companyUserService;
     private final ClientService clientService;
+    private final InvoiceService invoiceService;
 
     private final Scanner scanner;
 
@@ -58,18 +59,18 @@ public class CliApp {
         this.emf = JpaUtil.getEntityManagerFactory();
         this.scanner = new Scanner(System.in);
 
-        // Initialize repositories
         this.userRepository = new UserRepository(emf);
         this.companyRepository = new CompanyRepository(emf);
         this.companyUserRepository = new CompanyUserRepository(emf);
         this.clientRepository = new ClientRepository(emf);
+        this.invoiceRepository = new InvoiceRepository(emf);
 
-        // Initialize services
         this.userService = new UserService(userRepository);
         this.authService = new AuthService(userRepository, userService);
         this.companyService = new CompanyService(companyRepository, companyUserRepository, userRepository);
         this.companyUserService = new CompanyUserService(userRepository, companyUserRepository, companyRepository);
         this.clientService = new ClientService(clientRepository, companyRepository);
+        this.invoiceService = new InvoiceService(invoiceRepository, companyRepository, clientRepository);
     }
 
     public void run() {
@@ -496,31 +497,6 @@ public class CliApp {
     }
 
     private void invoiceMenu() {
-        // TODO: Invoice functionality is being worked on in a different branch
-        // The following operations are commented out but show the intended flow
-
-        System.out.println("\n--- Invoice Management ---");
-        System.out.println("⚠️  Invoice functionality is currently under development");
-        System.out.println("The following operations will be available:");
-        System.out.println("1. List Invoices");
-        System.out.println("2. Create Invoice");
-        System.out.println("3. Update Invoice Status");
-        System.out.println("4. Add Invoice Item");
-        System.out.println("5. Remove Invoice Item");
-        System.out.println("6. Update Invoice Item");
-        System.out.println("7. Delete Invoice");
-        System.out.println("8. Back to Main Menu");
-        System.out.print("Choose option (8 to go back): ");
-
-        int choice = readInt();
-        if (choice == 8) {
-            return;
-        }
-
-        System.out.println("This feature is not yet implemented.");
-
-        /* TODO: Uncomment when InvoiceService and InvoiceItemService are implemented
-
         while (true) {
             System.out.println("\n--- Invoice Management ---");
             System.out.println("1. List Invoices");
@@ -543,16 +519,15 @@ public class CliApp {
                 default -> System.out.println("Invalid choice.");
             }
         }
-        */
     }
-
-    /* TODO: Uncomment when InvoiceService is implemented
 
     private void listInvoices() {
         try {
-            // List<InvoiceDTO> invoices = invoiceService.getInvoicesByCompany(currentCompanyId);
-            // Display invoices...
-            System.out.println("List invoices functionality - to be implemented");
+            List<InvoiceDTO> invoices = invoiceService.getInvoicesByCompany(currentCompanyId);
+            if (invoices.isEmpty()) {
+                System.out.println("There are currently no invoices under this company");
+            }
+            invoices.forEach(System.out::println);
         } catch (Exception e) {
             System.out.println("✗ Failed to list invoices: " + e.getMessage());
         }
@@ -560,31 +535,100 @@ public class CliApp {
 
     private void createInvoice() {
         System.out.println("\n--- Create Invoice ---");
-        // 1. List clients for selection
-        // 2. Select client
-        // 3. Enter invoice number
-        // 4. Enter due date
-        // 5. Create invoice with status CREATED
-        // 6. Add invoice items
-        System.out.println("Create invoice functionality - to be implemented");
+
+        List<ClientDTO> clients = clientService.getClientsByCompany(currentCompanyId);
+
+        if (clients.isEmpty()) {
+            System.out.println("No clients found for this company, please create a client first");
+            return;
+        }
+
+        for (int i = 0; i < clients.size(); i++) {
+            ClientDTO client = clients.get(i);
+            System.out.println((i + 1) + ".");
+            System.out.println("  ID: " + client.id());
+            System.out.println("  Name: " + client.firstName() + " " + client.lastName());
+            System.out.println("  Email: " + client.email());
+            System.out.println("  City: " + client.city());
+            System.out.println("  ---");
+        }
+
+        System.out.print("Select client number: ");
+        int clientIndex = readInt() - 1;
+
+        if (clientIndex < 0 || clientIndex >= clients.size()) {
+            System.out.println("Invalid client selection");
+            return;
+        }
+
+        ClientDTO selectedClient = clients.get(clientIndex);
+
+        System.out.print("Invoice Number: ");
+        String invoiceNumber = scanner.nextLine().trim();
+
+        System.out.print("Due date (yyyy-MM-dd): ");
+        String input = scanner.nextLine().trim();
+
+        LocalDate dueDate = LocalDate.parse(input);
+        LocalDateTime dueDateTime = dueDate.atTime(23, 59);
+
+
+        List<InvoiceItemDTO> items = readInvoiceItems();
+
+        if (items.isEmpty()) {
+            System.out.println("Invoice must have at least one item");
+            return;
+        }
+
+        CreateInvoiceDTO dto = new CreateInvoiceDTO(
+            currentCompanyId,
+            selectedClient.id(),
+            invoiceNumber,
+            dueDateTime,
+            items
+        );
+
+        invoiceService.createInvoice(dto);
+
+        System.out.println("✓ Invoice created");
+    }
+
+    private List<InvoiceItemDTO> readInvoiceItems() {
+        List<InvoiceItemDTO> items = new ArrayList<>();
+
+        while (true) {
+            System.out.print("Add item? (y/n): ");
+            String choice = scanner.nextLine().trim();
+
+            if (!choice.equalsIgnoreCase("y")) break;
+
+            System.out.print("Quantity: ");
+            int quantity = readInt();
+
+            System.out.print("Unit price: ");
+            BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
+
+            items.add(InvoiceItemDTO.builder()
+                .quantity(quantity)
+                .unitPrice(unitPrice)
+                .build()
+            );
+        }
+
+        return items;
     }
 
     private void updateInvoiceStatus() {
         System.out.print("\nEnter Invoice ID: ");
-        String invoiceIdStr = scanner.nextLine().trim();
+        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
 
         System.out.println("Available statuses: CREATED, SENT, PAID, OVERDUE, CANCELLED");
         System.out.print("Enter new status: ");
-        String statusStr = scanner.nextLine().trim();
+        InvoiceStatus status = InvoiceStatus.valueOf(scanner.nextLine().trim());
 
-        try {
-            // UUID invoiceId = UUID.fromString(invoiceIdStr);
-            // InvoiceStatus status = InvoiceStatus.valueOf(statusStr);
-            // invoiceService.updateInvoiceStatus(invoiceId, status);
-            System.out.println("✓ Invoice status updated successfully!");
-        } catch (Exception e) {
-            System.out.println("✗ Failed to update invoice status: " + e.getMessage());
-        }
+        invoiceService.updateStatus(invoiceId, status);
+
+        System.out.println("✓ Invoice status updated successfully!");
     }
 
     private void invoiceItemMenu() {
@@ -612,94 +656,117 @@ public class CliApp {
 
     private void listInvoiceItems() {
         System.out.print("\nEnter Invoice ID: ");
-        String invoiceIdStr = scanner.nextLine().trim();
+        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
 
-        try {
-            // UUID invoiceId = UUID.fromString(invoiceIdStr);
-            // List<InvoiceItemDTO> items = invoiceItemService.getItemsByInvoice(invoiceId);
-            // Display items...
-            System.out.println("List invoice items functionality - to be implemented");
-        } catch (Exception e) {
-            System.out.println("✗ Failed to list invoice items: " + e.getMessage());
-        }
+        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
+            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+
+        invoice.items().forEach(System.out::println);
     }
 
     private void addInvoiceItem() {
         System.out.print("\nEnter Invoice ID: ");
-        String invoiceIdStr = scanner.nextLine().trim();
+        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
 
         System.out.print("Quantity: ");
         int quantity = readInt();
 
-        System.out.print("Unit Price: ");
-        String unitPriceStr = scanner.nextLine().trim();
+        System.out.print("Unit price: ");
+        BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
 
-        try {
-            // UUID invoiceId = UUID.fromString(invoiceIdStr);
-            // BigDecimal unitPrice = new BigDecimal(unitPriceStr);
-            // invoiceItemService.addItem(invoiceId, quantity, unitPrice);
-            // invoiceService.recalculateTotal(invoiceId); // Recalculate invoice total
-            System.out.println("✓ Invoice item added successfully!");
-        } catch (Exception e) {
-            System.out.println("✗ Failed to add invoice item: " + e.getMessage());
-        }
+        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
+            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+
+        List<InvoiceItemDTO> updated = new ArrayList<>(invoice.items());
+        updated.add(InvoiceItemDTO.builder()
+            .quantity(quantity)
+            .unitPrice(unitPrice)
+            .build()
+        );
+
+        invoiceService.updateInvoice(new UpdateInvoiceDTO(
+            invoiceId,
+            null,
+            updated,
+            null
+        ));
+
+        System.out.println("✓ Invoice item added");
     }
 
     private void updateInvoiceItem() {
-        System.out.print("\nEnter Invoice Item ID: ");
-        String itemIdStr = scanner.nextLine().trim();
+        System.out.print("\nEnter Invoice ID: ");
+        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
+
+        System.out.print("Enter Item ID: ");
+        UUID itemId = UUID.fromString(scanner.nextLine().trim());
 
         System.out.print("New Quantity: ");
         int quantity = readInt();
 
         System.out.print("New Unit Price: ");
-        String unitPriceStr = scanner.nextLine().trim();
+        BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
 
-        try {
-            // UUID itemId = UUID.fromString(itemIdStr);
-            // BigDecimal unitPrice = new BigDecimal(unitPriceStr);
-            // invoiceItemService.updateItem(itemId, quantity, unitPrice);
-            // invoiceService.recalculateTotal(invoiceId); // Recalculate invoice total
-            System.out.println("✓ Invoice item updated successfully!");
-        } catch (Exception e) {
-            System.out.println("✗ Failed to update invoice item: " + e.getMessage());
-        }
+        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
+            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+
+        List<InvoiceItemDTO> updated = invoice.items().stream()
+            .map(i -> i.id().equals(itemId)
+                ? InvoiceItemDTO.builder().id(itemId).quantity(quantity).unitPrice(unitPrice).build()
+                : i
+            )
+            .toList();
+
+        invoiceService.updateInvoice(new UpdateInvoiceDTO(
+            invoiceId,
+            null,
+            updated,
+            null
+        ));
+
+        System.out.println("✓ Invoice item updated");
     }
+
 
     private void removeInvoiceItem() {
-        System.out.print("\nEnter Invoice Item ID to remove: ");
-        String itemIdStr = scanner.nextLine().trim();
+        System.out.print("\nEnter Invoice ID: ");
+        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
 
-        try {
-            // UUID itemId = UUID.fromString(itemIdStr);
-            // invoiceItemService.removeItem(itemId);
-            // invoiceService.recalculateTotal(invoiceId); // Recalculate invoice total
-            System.out.println("✓ Invoice item removed successfully!");
-        } catch (Exception e) {
-            System.out.println("✗ Failed to remove invoice item: " + e.getMessage());
-        }
+        System.out.print("Enter Item ID to remove: ");
+        UUID itemId = UUID.fromString(scanner.nextLine().trim());
+
+        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
+            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+
+        List<InvoiceItemDTO> updated = invoice.items().stream()
+            .filter(i -> !i.id().equals(itemId))
+            .toList();
+
+        invoiceService.updateInvoice(new UpdateInvoiceDTO(
+            invoiceId,
+            null,
+            updated,
+            null
+        ));
+
+        System.out.println("✓ Invoice item removed");
     }
+
 
     private void deleteInvoice() {
         System.out.print("\nEnter Invoice ID to delete: ");
-        String invoiceIdStr = scanner.nextLine().trim();
+        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
 
         System.out.print("Are you sure you want to delete this invoice? (yes/no): ");
         String confirm = scanner.nextLine().trim().toLowerCase();
 
         if ("yes".equals(confirm)) {
-            try {
-                // UUID invoiceId = UUID.fromString(invoiceIdStr);
-                // invoiceService.deleteInvoice(invoiceId);
-                System.out.println("✓ Invoice deleted successfully!");
-            } catch (Exception e) {
-                System.out.println("✗ Failed to delete invoice: " + e.getMessage());
-            }
+            invoiceService.deleteById(invoiceId);
+            System.out.println("✓ Invoice deleted successfully!");
         } else {
             System.out.println("Deletion cancelled.");
         }
     }
-    */
 
     private void companyUserMenu() {
         while (true) {

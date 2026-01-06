@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
-    protected InvoiceRepository(EntityManagerFactory emf) {
+    public InvoiceRepository(EntityManagerFactory emf) {
         super(emf, Invoice.class);
     }
 
