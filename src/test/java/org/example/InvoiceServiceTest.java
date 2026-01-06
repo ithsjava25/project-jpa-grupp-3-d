@@ -1,19 +1,19 @@
 package org.example;
 
-import org.example.dto.InvoiceDTO;
-import org.example.entity.Company;
-import org.example.entity.Invoice;
-import org.example.entity.InvoiceStatus;
+import org.example.entity.invoice.Invoice;
+import org.example.entity.company.Company;
+import org.example.entity.invoice.*;
+import org.example.entity.client.Client;
+import org.example.repository.ClientRepository;
+import org.example.repository.CompanyRepository;
 import org.example.repository.InvoiceRepository;
-import org.example.service.ClientService;
-import org.example.service.CompanyService;
-import org.example.service.CompanyUserService;
 import org.example.service.InvoiceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,147 +23,156 @@ import static org.mockito.Mockito.*;
 public class InvoiceServiceTest {
 
     private InvoiceRepository invoiceRepository;
-    private ClientService clientService;
-    private CompanyService companyService;
-    private CompanyUserService companyUserService;
+    private CompanyRepository companyRepository;
+    private ClientRepository clientRepository;
     private InvoiceService invoiceService;
 
     @BeforeEach
     void setUp() {
         invoiceRepository = mock(InvoiceRepository.class);
-        clientService = mock(ClientService.class);
-        companyService = mock(CompanyService.class);
-        companyUserService = mock(CompanyUserService.class);
-
+        companyRepository = mock(CompanyRepository.class);
+        clientRepository = mock(ClientRepository.class);
 
         invoiceService = new InvoiceService(
-            clientService,
-            companyUserService,
             invoiceRepository,
-            companyService
+            companyRepository,
+            clientRepository
         );
     }
 
     @Test
     void testCreateInvoice_Success() {
         // Arrange
-        UUID userId = UUID.randomUUID();
         UUID companyId = UUID.randomUUID();
-        BigDecimal amount = new BigDecimal("1200.00");
-        LocalDateTime now = LocalDateTime.now();
+        UUID clientId = UUID.randomUUID();
 
-        InvoiceDTO inputDto = new InvoiceDTO(
-            null,           // id (UUID)
-            companyId,      // companyId (UUID)
-            null,           // clientId (UUID)
-            "INV-001",      // number (String)
-            amount,         // amount (BigDecimal)
-            now,            // dueDate (LocalDateTime)
-            now,            // createdAt (LocalDateTime)
-            InvoiceStatus.CREATED // status (InvoiceStatus)
+        CreateInvoiceDTO createDto = new CreateInvoiceDTO(
+            companyId,
+            clientId,
+            "INV-001",
+            LocalDateTime.now().plusDays(14),
+            List.of()
         );
 
-        // Simulates that the user has access to the company
-        when(companyUserService.isUserAssociatedWithCompany(userId, companyId)).thenReturn(true);
-
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(new Company()));
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(new Client()));
         when(invoiceRepository.findByInvoiceNumber("INV-001")).thenReturn(Optional.empty());
-        // simulates the save to the database
-        when(invoiceRepository.create(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+
+        when(invoiceRepository.create(any(Invoice.class))).thenAnswer(i -> {
+            Invoice inv = i.getArgument(0);
+            inv.setId(UUID.randomUUID());
+            return inv;
+        });
 
         // Act
-        InvoiceDTO result = invoiceService.createInvoice(inputDto, userId);
+        InvoiceDTO result = invoiceService.createInvoice(createDto);
 
         // Assert
         assertNotNull(result);
         assertEquals("INV-001", result.number());
-        verify(invoiceRepository, times(1)).create(any());
+        verify(invoiceRepository).create(any(Invoice.class));
     }
 
     @Test
     void testCreateInvoice_NumberAlreadyExists() {
         // Arrange
-        UUID userId = UUID.randomUUID();
         UUID companyId = UUID.randomUUID();
-        InvoiceDTO inputDto = new InvoiceDTO(null, companyId, null, "INV-EXIST", BigDecimal.ZERO, null, null, null);
+        CreateInvoiceDTO createDto = new CreateInvoiceDTO(companyId, UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), List.of());
 
-        when(companyUserService.isUserAssociatedWithCompany(userId, companyId)).thenReturn(true);
-        //simulates that the number already exists in the database
+
         when(invoiceRepository.findByInvoiceNumber("INV-EXIST")).thenReturn(Optional.of(new Invoice()));
 
         // Act & Assert
-        // were expecting an IllegalArgumentException
-        assertThrows(IllegalArgumentException.class, () -> {
-            invoiceService.createInvoice(inputDto, userId);
-        });
-
-        // verify that "create" was never called
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(createDto));
         verify(invoiceRepository, never()).create(any());
     }
 
     @Test
-    void testGetInvoiceById_SecurityException() {
+    void testUpdateInvoice_Success() {
         // Arrange
         UUID invoiceId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UUID companyId = UUID.randomUUID(); // users company
-        UUID otherCompanyId = UUID.randomUUID(); // the invoices real company
-
-        Invoice invoice = new Invoice();
-        Company otherCompany = new Company();
-        otherCompany.setId(otherCompanyId);
-        invoice.setCompany(otherCompany);
-
-        when(companyUserService.isUserAssociatedWithCompany(userId, companyId)).thenReturn(true);
-        when(invoiceRepository.findByIdWithItems(invoiceId)).thenReturn(Optional.of(invoice));
-
-        // Act & Assert
-        // expecting a SecurityException because companyId does not match
-        assertThrows(SecurityException.class, () -> {
-            invoiceService.getInvoiceById(invoiceId, userId, companyId);
-        });
-
-        // verify that we did not make it to the mapping stage
-        verify(invoiceRepository).findByIdWithItems(invoiceId);
-    }
-
-    @Test
-    void testDeleteInvoice_Success() {
-        // Arrange
-        UUID id = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
         UUID companyId = UUID.randomUUID();
+        UUID clientId = UUID.randomUUID();
 
-        Invoice invoice = new Invoice();
+        Invoice existingInvoice = new Invoice();
+        existingInvoice.setId(invoiceId);
+        existingInvoice.setNumber("INV-123");
+        existingInvoice.setAmount(BigDecimal.ZERO);
+
         Company company = new Company();
         company.setId(companyId);
-        invoice.setCompany(company);
+        existingInvoice.setCompany(company);
 
-        when(companyUserService.isUserAssociatedWithCompany(userId, companyId)).thenReturn(true);
-        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
+        Client client = new Client();
+        client.setId(clientId);
+        existingInvoice.setClient(client);
+
+        UpdateInvoiceDTO updateDto = new UpdateInvoiceDTO(
+            invoiceId,
+            LocalDateTime.now().plusDays(30),
+            List.of(new InvoiceItemDTO(null, 2, new BigDecimal("500.00"))),
+            InvoiceStatus.SENT
+        );
+
+        when(invoiceRepository.findByIdWithItems(invoiceId)).thenReturn(Optional.of(existingInvoice));
+        when(invoiceRepository.update(any(Invoice.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        invoiceService.deleteById(id, userId, companyId);
+        InvoiceDTO result = invoiceService.updateInvoice(updateDto);
 
         // Assert
-        verify(invoiceRepository, times(1)).delete(invoice);
+        assertEquals(InvoiceStatus.SENT, result.status());
+        verify(invoiceRepository).update(existingInvoice);
     }
 
     @Test
-    void testCreateInvoice_UserNotAssociatedWithCompany() {
+    void testGetInvoiceById_Success() {
         // Arrange
-        UUID userId = UUID.randomUUID();
-        UUID companyId = UUID.randomUUID();
-        InvoiceDTO inputDto = new InvoiceDTO(null, companyId, null, "INV-001", BigDecimal.ZERO, null, null, null);
+        UUID id = UUID.randomUUID();
+        Invoice invoice = new Invoice();
+        invoice.setId(id);
+        invoice.setNumber("INV-180");
 
-        // simulates that the user does not have access
-        when(companyUserService.isUserAssociatedWithCompany(userId, companyId)).thenReturn(false);
+        Company company = new Company();
+        company.setId(UUID.randomUUID());
+        invoice.setCompany(company);
+
+        Client client = new Client();
+        client.setId(UUID.randomUUID());
+        invoice.setClient(client);
+
+        when(invoiceRepository.findByIdWithItems(id)).thenReturn(Optional.of(invoice));
+
+        // Act
+        Optional<InvoiceDTO> result = invoiceService.getInvoiceById(id);
+
+        // Assert
+        assertTrue(result.isPresent());
+        assertEquals("INV-180", result.get().number());
+    }
+
+    @Test
+    void testDeleteById_Success() {
+        // Arrange
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.existsById(id)).thenReturn(true);
+
+        // Act
+        invoiceService.deleteById(id);
+
+        // Assert
+        verify(invoiceRepository).deleteById(id);
+    }
+
+    @Test
+    void testDeleteById_NotFound() {
+        // Arrange
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.existsById(id)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(SecurityException.class, () -> {
-            invoiceService.createInvoice(inputDto, userId);
-        });
-
-        // verify that we never checked if the invoice exists
-        verify(invoiceRepository, never()).findByInvoiceNumber(anyString());
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.deleteById(id));
+        verify(invoiceRepository, never()).deleteById(any());
     }
 }
