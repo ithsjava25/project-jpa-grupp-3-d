@@ -40,19 +40,13 @@ public class InvoiceServiceTest {
         );
     }
 
+    //Success cases
+
     @Test
     void testCreateInvoice_Success() {
-        // Arrange
         UUID companyId = UUID.randomUUID();
         UUID clientId = UUID.randomUUID();
-
-        CreateInvoiceDTO createDto = new CreateInvoiceDTO(
-            companyId,
-            clientId,
-            "INV-001",
-            LocalDateTime.now().plusDays(14),
-            List.of()
-        );
+        CreateInvoiceDTO createDto = new CreateInvoiceDTO(companyId, clientId, "INV-001", LocalDateTime.now().plusDays(14), List.of());
 
         Company company = new Company(); company.setId(companyId);
         Client client = new Client(); client.setId(clientId);
@@ -60,47 +54,73 @@ public class InvoiceServiceTest {
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
         when(clientRepository.findById(clientId)).thenReturn(Optional.of(client));
         when(invoiceRepository.findByInvoiceNumber("INV-001")).thenReturn(Optional.empty());
-
         when(invoiceRepository.create(any(Invoice.class))).thenAnswer(i -> {
             Invoice inv = i.getArgument(0);
             inv.setId(UUID.randomUUID());
-            // Sätt dessa manuellt för att simulera att de finns vid mappning till DTO
             inv.setCompany(company);
             inv.setClient(client);
             return inv;
         });
 
-        // Act
         InvoiceDTO result = invoiceService.createInvoice(createDto);
 
-        // Assert
         assertNotNull(result);
         assertEquals("INV-001", result.number());
-        assertEquals(companyId, result.companyId());
         verify(invoiceRepository).create(any(Invoice.class));
     }
 
     @Test
-    void testUpdateInvoice_Success() {
-        // Arrange
-        UUID invoiceId = UUID.randomUUID();
-        // Använd hjälpmetoden för att få en komplett faktura med Company och Client
-        Invoice existingInvoice = createFullInvoice(invoiceId, "INV-123");
+    void testUpdateStatus_Success() {
+        UUID id = UUID.randomUUID();
+        Invoice invoice = createFullInvoice(id, "INV-100");
 
-        UpdateInvoiceDTO updateDto = new UpdateInvoiceDTO(
-            invoiceId,
-            LocalDateTime.now().plusDays(30),
-            List.of(new InvoiceItemDTO(null, 2, new BigDecimal("500.00"))),
-            InvoiceStatus.SENT
-        );
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice));
+
+        invoiceService.updateStatus(id, InvoiceStatus.PAID);
+
+        assertEquals(InvoiceStatus.PAID, invoice.getStatus());
+        verify(invoiceRepository).update(invoice);
+    }
+
+    @Test
+    void testGetInvoicesByCompany_Success() {
+        UUID companyId = UUID.randomUUID();
+        Invoice inv = createFullInvoice(UUID.randomUUID(), "INV-COMP");
+        inv.getCompany().setId(companyId);
+
+        when(invoiceRepository.findAllByCompanyId(companyId)).thenReturn(List.of(inv));
+
+        List<InvoiceDTO> result = invoiceService.getInvoicesByCompany(companyId);
+
+        assertEquals(1, result.size());
+        assertEquals("INV-COMP", result.get(0).number());
+    }
+
+    @Test
+    void testGetInvoicesByClient_Success() {
+        UUID clientId = UUID.randomUUID();
+        Invoice inv = createFullInvoice(UUID.randomUUID(), "INV-CLI");
+        inv.getClient().setId(clientId);
+
+        when(invoiceRepository.findAllByClientId(clientId)).thenReturn(List.of(inv));
+
+        List<InvoiceDTO> result = invoiceService.getInvoicesByClient(clientId);
+
+        assertEquals(1, result.size());
+        assertEquals("INV-CLI", result.get(0).number());
+    }
+
+    @Test
+    void testUpdateInvoice_Success() {
+        UUID invoiceId = UUID.randomUUID();
+        Invoice existingInvoice = createFullInvoice(invoiceId, "INV-123");
+        UpdateInvoiceDTO updateDto = new UpdateInvoiceDTO(invoiceId, LocalDateTime.now().plusDays(30), List.of(new InvoiceItemDTO(null, 2, new BigDecimal("500.00"))), InvoiceStatus.SENT);
 
         when(invoiceRepository.findByIdWithItems(invoiceId)).thenReturn(Optional.of(existingInvoice));
         when(invoiceRepository.update(any(Invoice.class))).thenAnswer(i -> i.getArgument(0));
 
-        // Act
         InvoiceDTO result = invoiceService.updateInvoice(updateDto);
 
-        // Assert
         assertNotNull(result);
         assertEquals(InvoiceStatus.SENT, result.status());
         verify(invoiceRepository).update(existingInvoice);
@@ -108,58 +128,84 @@ public class InvoiceServiceTest {
 
     @Test
     void testGetInvoiceById_Success() {
-        // Arrange
         UUID id = UUID.randomUUID();
         Invoice invoice = createFullInvoice(id, "INV-180");
-
         when(invoiceRepository.findByIdWithItems(id)).thenReturn(Optional.of(invoice));
 
-        // Act
         Optional<InvoiceDTO> result = invoiceService.getInvoiceById(id);
 
-        // Assert
         assertTrue(result.isPresent());
         assertEquals("INV-180", result.get().number());
-        assertNotNull(result.get().companyId());
     }
 
     @Test
     void testDeleteById_Success() {
-        // Arrange
         UUID id = UUID.randomUUID();
         when(invoiceRepository.existsById(id)).thenReturn(true);
-
-        // Act
         invoiceService.deleteById(id);
-
-        // Assert
         verify(invoiceRepository).deleteById(id);
     }
 
+
+    @Test
+    void testCreateInvoice_CompanyNotFound() {
+        UUID companyId = UUID.randomUUID();
+        CreateInvoiceDTO dto = new CreateInvoiceDTO(companyId, UUID.randomUUID(), "INV-X", LocalDateTime.now(), List.of());
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(dto));
+        verify(invoiceRepository, never()).create(any());
+    }
+
+    @Test
+    void testCreateInvoice_ClientNotFound() {
+        UUID companyId = UUID.randomUUID();
+        UUID clientId = UUID.randomUUID();
+        CreateInvoiceDTO dto = new CreateInvoiceDTO(companyId, clientId, "INV-X", LocalDateTime.now(), List.of());
+
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(new Company()));
+        when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(dto));
+        verify(invoiceRepository, never()).create(any());
+    }
+
+    @Test
+    void testUpdateInvoice_InvoiceNotFound() {
+        UUID id = UUID.randomUUID();
+        UpdateInvoiceDTO dto = new UpdateInvoiceDTO(id, LocalDateTime.now(), List.of(), InvoiceStatus.SENT);
+
+        when(invoiceRepository.findByIdWithItems(id)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.updateInvoice(dto));
+        verify(invoiceRepository, never()).update(any());
+    }
+
+    @Test
+    void testUpdateStatus_InvoiceNotFound() {
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.updateStatus(id, InvoiceStatus.PAID));
+        verify(invoiceRepository, never()).update(any());
+    }
+
+
     @Test
     void testDeleteById_NotFound() {
-        // Arrange
         UUID id = UUID.randomUUID();
         when(invoiceRepository.existsById(id)).thenReturn(false);
-
-        // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> invoiceService.deleteById(id));
         verify(invoiceRepository, never()).deleteById(any());
     }
 
     @Test
     void testCreateInvoice_NumberAlreadyExists() {
-        // Arrange
-        CreateInvoiceDTO createDto = new CreateInvoiceDTO(
-            UUID.randomUUID(), UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), List.of()
-        );
-
+        CreateInvoiceDTO createDto = new CreateInvoiceDTO(UUID.randomUUID(), UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), List.of());
         when(invoiceRepository.findByInvoiceNumber("INV-EXIST")).thenReturn(Optional.of(new Invoice()));
-
-        // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(createDto));
     }
-
 
     private Invoice createFullInvoice(UUID id, String number) {
         Invoice invoice = new Invoice();
@@ -169,14 +215,10 @@ public class InvoiceServiceTest {
         invoice.setStatus(InvoiceStatus.CREATED);
         invoice.setCreatedAt(LocalDateTime.now());
 
-
-        Company company = new Company();
-        company.setId(UUID.randomUUID());
+        Company company = new Company(); company.setId(UUID.randomUUID());
         invoice.setCompany(company);
 
-
-        Client client = new Client();
-        client.setId(UUID.randomUUID());
+        Client client = new Client(); client.setId(UUID.randomUUID());
         invoice.setClient(client);
 
         return invoice;

@@ -34,13 +34,13 @@ public class InvoiceService {
 
         Company company = companyRepository.findById(dto.companyId())
             .orElseThrow(() -> {
-                log.error("Create invoice failed: Company {} not found", dto.companyId());
+                log.warn("Create invoice failed: Company {} not found", dto.companyId());
                 return new IllegalArgumentException("Company not found");
             });
 
         Client client = clientRepository.findById(dto.clientId())
             .orElseThrow(() -> {
-                log.error("Create invoice failed: Client {} not found", dto.clientId());
+                log.warn("Create invoice failed: Client {} not found", dto.clientId());
                 return new IllegalArgumentException("Client not found");
             });
 
