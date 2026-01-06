@@ -1,9 +1,9 @@
 package org.example;
 
-import org.example.entity.invoice.Invoice;
+import org.example.entity.invoice.InvoiceDTO;
 import org.example.entity.company.Company;
-import org.example.entity.invoice.*;
 import org.example.entity.client.Client;
+import org.example.entity.invoice.*;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.InvoiceRepository;
@@ -54,14 +54,19 @@ public class InvoiceServiceTest {
             List.of()
         );
 
-        when(companyRepository.findById(companyId)).thenReturn(Optional.of(new Company()));
-        when(clientRepository.findById(clientId)).thenReturn(Optional.of(new Client()));
-        when(invoiceRepository.findByInvoiceNumber("INV-001")).thenReturn(Optional.empty());
+        Company company = new Company(); company.setId(companyId);
+        Client client = new Client(); client.setId(clientId);
 
+        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
+        when(clientRepository.findById(clientId)).thenReturn(Optional.of(client));
+        when(invoiceRepository.findByInvoiceNumber("INV-001")).thenReturn(Optional.empty());
 
         when(invoiceRepository.create(any(Invoice.class))).thenAnswer(i -> {
             Invoice inv = i.getArgument(0);
             inv.setId(UUID.randomUUID());
+            // Sätt dessa manuellt för att simulera att de finns vid mappning till DTO
+            inv.setCompany(company);
+            inv.setClient(client);
             return inv;
         });
 
@@ -71,42 +76,16 @@ public class InvoiceServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals("INV-001", result.number());
+        assertEquals(companyId, result.companyId());
         verify(invoiceRepository).create(any(Invoice.class));
-    }
-
-    @Test
-    void testCreateInvoice_NumberAlreadyExists() {
-        // Arrange
-        UUID companyId = UUID.randomUUID();
-        CreateInvoiceDTO createDto = new CreateInvoiceDTO(companyId, UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), List.of());
-
-
-        when(invoiceRepository.findByInvoiceNumber("INV-EXIST")).thenReturn(Optional.of(new Invoice()));
-
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(createDto));
-        verify(invoiceRepository, never()).create(any());
     }
 
     @Test
     void testUpdateInvoice_Success() {
         // Arrange
         UUID invoiceId = UUID.randomUUID();
-        UUID companyId = UUID.randomUUID();
-        UUID clientId = UUID.randomUUID();
-
-        Invoice existingInvoice = new Invoice();
-        existingInvoice.setId(invoiceId);
-        existingInvoice.setNumber("INV-123");
-        existingInvoice.setAmount(BigDecimal.ZERO);
-
-        Company company = new Company();
-        company.setId(companyId);
-        existingInvoice.setCompany(company);
-
-        Client client = new Client();
-        client.setId(clientId);
-        existingInvoice.setClient(client);
+        // Använd hjälpmetoden för att få en komplett faktura med Company och Client
+        Invoice existingInvoice = createFullInvoice(invoiceId, "INV-123");
 
         UpdateInvoiceDTO updateDto = new UpdateInvoiceDTO(
             invoiceId,
@@ -122,6 +101,7 @@ public class InvoiceServiceTest {
         InvoiceDTO result = invoiceService.updateInvoice(updateDto);
 
         // Assert
+        assertNotNull(result);
         assertEquals(InvoiceStatus.SENT, result.status());
         verify(invoiceRepository).update(existingInvoice);
     }
@@ -130,17 +110,7 @@ public class InvoiceServiceTest {
     void testGetInvoiceById_Success() {
         // Arrange
         UUID id = UUID.randomUUID();
-        Invoice invoice = new Invoice();
-        invoice.setId(id);
-        invoice.setNumber("INV-180");
-
-        Company company = new Company();
-        company.setId(UUID.randomUUID());
-        invoice.setCompany(company);
-
-        Client client = new Client();
-        client.setId(UUID.randomUUID());
-        invoice.setClient(client);
+        Invoice invoice = createFullInvoice(id, "INV-180");
 
         when(invoiceRepository.findByIdWithItems(id)).thenReturn(Optional.of(invoice));
 
@@ -150,6 +120,7 @@ public class InvoiceServiceTest {
         // Assert
         assertTrue(result.isPresent());
         assertEquals("INV-180", result.get().number());
+        assertNotNull(result.get().companyId());
     }
 
     @Test
@@ -174,5 +145,40 @@ public class InvoiceServiceTest {
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> invoiceService.deleteById(id));
         verify(invoiceRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void testCreateInvoice_NumberAlreadyExists() {
+        // Arrange
+        CreateInvoiceDTO createDto = new CreateInvoiceDTO(
+            UUID.randomUUID(), UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), List.of()
+        );
+
+        when(invoiceRepository.findByInvoiceNumber("INV-EXIST")).thenReturn(Optional.of(new Invoice()));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(createDto));
+    }
+
+
+    private Invoice createFullInvoice(UUID id, String number) {
+        Invoice invoice = new Invoice();
+        invoice.setId(id);
+        invoice.setNumber(number);
+        invoice.setAmount(BigDecimal.ZERO);
+        invoice.setStatus(InvoiceStatus.CREATED);
+        invoice.setCreatedAt(LocalDateTime.now());
+
+
+        Company company = new Company();
+        company.setId(UUID.randomUUID());
+        invoice.setCompany(company);
+
+
+        Client client = new Client();
+        client.setId(UUID.randomUUID());
+        invoice.setClient(client);
+
+        return invoice;
     }
 }

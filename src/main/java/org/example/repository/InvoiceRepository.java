@@ -35,7 +35,7 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
     public Optional<Invoice> findByIdWithItems(UUID id) {
         return executeRead(em -> {
             return em.createQuery(
-                    "SELECT i FROM Invoice i LEFT JOIN FETCH i.items WHERE i.id = :id", Invoice.class)
+                    "SELECT i FROM Invoice i LEFT JOIN FETCH i.invoiceItems WHERE i.id = :id", Invoice.class)
                 .setParameter("id", id)
                 .getResultStream()
                 .findFirst();
@@ -46,7 +46,7 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
     public List<Invoice> findAllByCompanyId(UUID companyId) {
         return executeRead(em->{
             return em.createQuery(
-                "SELECT i FROM Invoice i WHERE i.company.id = :companyId",  Invoice.class)
+                    "SELECT i FROM Invoice i LEFT JOIN FETCH i.invoiceItems WHERE i.company.id = :companyId", Invoice.class)
                     .setParameter("companyId", companyId)
                 .getResultList();
         });
@@ -56,7 +56,7 @@ public class InvoiceRepository extends BaseRepository<Invoice, UUID>{
     public List<Invoice> findAllByClientId (UUID clientId) {
         return executeRead(em->{
             return em.createQuery(
-                "SELECT i FROM Invoice i WHERE i.client.id = :clientId",  Invoice.class)
+                    "SELECT i FROM Invoice i LEFT JOIN FETCH i.invoiceItems WHERE i.client.id = :clientId", Invoice.class)
                 .setParameter("clientId", clientId)
                 .getResultList();
 
