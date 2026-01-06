@@ -619,16 +619,20 @@ public class CliApp {
     }
 
     private void updateInvoiceStatus() {
-        System.out.print("\nEnter Invoice ID: ");
-        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
+        InvoiceDTO invoice = selectInvoice();
+        if (invoice == null) return;
 
         System.out.println("Available statuses: CREATED, SENT, PAID, OVERDUE, CANCELLED");
         System.out.print("Enter new status: ");
-        InvoiceStatus status = InvoiceStatus.valueOf(scanner.nextLine().trim());
+        String input = scanner.nextLine().trim().toUpperCase();
 
-        invoiceService.updateStatus(invoiceId, status);
-
-        System.out.println("✓ Invoice status updated successfully!");
+        try {
+            InvoiceStatus status = InvoiceStatus.valueOf(input);
+            invoiceService.updateStatus(invoice.id(), status);
+            System.out.println("✓ Invoice status updated successfully!");
+        } catch (IllegalArgumentException e) {
+            System.out.println("✗ Invalid status. Please enter one of the available options.");
+        }
     }
 
     private void invoiceItemMenu() {
@@ -655,27 +659,26 @@ public class CliApp {
     }
 
     private void listInvoiceItems() {
-        System.out.print("\nEnter Invoice ID: ");
-        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
+        InvoiceDTO invoice = selectInvoice();
+        if (invoice == null) return;
 
-        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
-            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+        if (invoice.items().isEmpty()) {
+            System.out.println("No items for this invoice.");
+            return;
+        }
 
         invoice.items().forEach(System.out::println);
     }
 
     private void addInvoiceItem() {
-        System.out.print("\nEnter Invoice ID: ");
-        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
+        InvoiceDTO invoice = selectInvoice();
+        if (invoice == null) return;
 
         System.out.print("Quantity: ");
         int quantity = readInt();
 
         System.out.print("Unit price: ");
         BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
-
-        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
-            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
 
         List<InvoiceItemDTO> updated = new ArrayList<>(invoice.items());
         updated.add(InvoiceItemDTO.builder()
@@ -684,22 +687,32 @@ public class CliApp {
             .build()
         );
 
-        invoiceService.updateInvoice(new UpdateInvoiceDTO(
-            invoiceId,
-            null,
-            updated,
-            null
-        ));
-
+        invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
         System.out.println("✓ Invoice item added");
     }
 
     private void updateInvoiceItem() {
-        System.out.print("\nEnter Invoice ID: ");
-        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
+        InvoiceDTO invoice = selectInvoice();
+        if (invoice == null) return;
 
-        System.out.print("Enter Item ID: ");
-        UUID itemId = UUID.fromString(scanner.nextLine().trim());
+        List<InvoiceItemDTO> items = invoice.items();
+        if (items.isEmpty()) {
+            System.out.println("No items to update.");
+            return;
+        }
+
+        for (int i = 0; i < items.size(); i++) {
+            System.out.println((i + 1) + ". " + items.get(i));
+        }
+
+        System.out.print("Select item to update: ");
+        int index = readInt() - 1;
+        if (index < 0 || index >= items.size()) {
+            System.out.println("Invalid selection");
+            return;
+        }
+
+        InvoiceItemDTO item = items.get(index);
 
         System.out.print("New Quantity: ");
         int quantity = readInt();
@@ -707,65 +720,82 @@ public class CliApp {
         System.out.print("New Unit Price: ");
         BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
 
-        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
-            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
-
-        List<InvoiceItemDTO> updated = invoice.items().stream()
-            .map(i -> i.id().equals(itemId)
-                ? InvoiceItemDTO.builder().id(itemId).quantity(quantity).unitPrice(unitPrice).build()
-                : i
-            )
+        List<InvoiceItemDTO> updated = items.stream()
+            .map(i -> i.id().equals(item.id()) ? InvoiceItemDTO.builder().id(i.id()).quantity(quantity).unitPrice(unitPrice).build() : i)
             .toList();
 
-        invoiceService.updateInvoice(new UpdateInvoiceDTO(
-            invoiceId,
-            null,
-            updated,
-            null
-        ));
-
+        invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
         System.out.println("✓ Invoice item updated");
     }
 
-
     private void removeInvoiceItem() {
-        System.out.print("\nEnter Invoice ID: ");
-        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
+        InvoiceDTO invoice = selectInvoice();
+        if (invoice == null) return;
 
-        System.out.print("Enter Item ID to remove: ");
-        UUID itemId = UUID.fromString(scanner.nextLine().trim());
+        List<InvoiceItemDTO> items = invoice.items();
+        if (items.isEmpty()) {
+            System.out.println("No items to remove.");
+            return;
+        }
 
-        InvoiceDTO invoice = invoiceService.getInvoiceById(invoiceId)
-            .orElseThrow(() -> new IllegalArgumentException("Invoice not found"));
+        for (int i = 0; i < items.size(); i++) {
+            System.out.println((i + 1) + ". " + items.get(i));
+        }
 
-        List<InvoiceItemDTO> updated = invoice.items().stream()
-            .filter(i -> !i.id().equals(itemId))
+        System.out.print("Select item to remove: ");
+        int index = readInt() - 1;
+        if (index < 0 || index >= items.size()) {
+            System.out.println("Invalid selection");
+            return;
+        }
+
+        InvoiceItemDTO item = items.get(index);
+
+        List<InvoiceItemDTO> updated = items.stream()
+            .filter(i -> !i.id().equals(item.id()))
             .toList();
 
-        invoiceService.updateInvoice(new UpdateInvoiceDTO(
-            invoiceId,
-            null,
-            updated,
-            null
-        ));
-
+        invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
         System.out.println("✓ Invoice item removed");
     }
 
-
     private void deleteInvoice() {
-        System.out.print("\nEnter Invoice ID to delete: ");
-        UUID invoiceId = UUID.fromString(scanner.nextLine().trim());
+        InvoiceDTO invoice = selectInvoice();
+        if (invoice == null) return;
 
         System.out.print("Are you sure you want to delete this invoice? (yes/no): ");
         String confirm = scanner.nextLine().trim().toLowerCase();
 
         if ("yes".equals(confirm)) {
-            invoiceService.deleteById(invoiceId);
+            invoiceService.deleteById(invoice.id());
             System.out.println("✓ Invoice deleted successfully!");
         } else {
             System.out.println("Deletion cancelled.");
         }
+    }
+
+    private InvoiceDTO selectInvoice() {
+        List<InvoiceDTO> invoices = invoiceService.getInvoicesByCompany(currentCompanyId);
+
+        if (invoices.isEmpty()) {
+            System.out.println("No invoices found for this company.");
+            return null;
+        }
+
+        for (int i = 0; i < invoices.size(); i++) {
+            InvoiceDTO inv = invoices.get(i);
+            System.out.println((i + 1) + ". " + inv.number() + " | " + inv.status() + " | " + inv.items().size() + " items");
+        }
+
+        System.out.print("Select invoice number: ");
+        int index = readInt() - 1;
+
+        if (index < 0 || index >= invoices.size()) {
+            System.out.println("Invalid selection");
+            return null;
+        }
+
+        return invoices.get(index);
     }
 
     private void companyUserMenu() {
