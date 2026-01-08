@@ -213,6 +213,8 @@ public class CliApp {
                         System.out.println("Account deleted. Exiting...");
                         currentUserId = null;
                         currentUser = null;
+                        currentCompany = null;
+                        currentCompanyId = null;
                         return false;
                     }
                 }
