@@ -5,6 +5,9 @@ import org.example.auth.PasswordEncoder;
 import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
 import org.example.entity.user.User;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
+import org.example.exception.ValidationException;
 import org.example.repository.UserRepository;
 import org.example.util.LogUtil;
 
@@ -32,19 +35,19 @@ public class UserService {
         if (!emailValid) {
             log.debug("Registration failed: invalid email format for email={}", LogUtil.maskEmail(dto.email()));
             log.warn("User registration failed due to invalid input");
-            throw new IllegalArgumentException("Invalid registration data");
+            throw new ValidationException("Invalid registration data");
         }
 
         if (userRepository.existsByEmail(dto.email())) {
             log.debug("Registration failed: email already exists for email={}", LogUtil.maskEmail(dto.email()));
             log.warn("User registration failed due to invalid input");
-            throw new IllegalArgumentException("Invalid registration data");
+            throw new BusinessRuleException("Invalid registration data");
         }
 
         if (!passwordValid) {
             log.debug("Registration failed: password validation failed");
             log.warn("User registration failed due to invalid input");
-            throw new IllegalArgumentException("Password must be at least 8 characters");
+            throw new ValidationException("Password must be at least 8 characters");
         }
 
         User user = User.fromDTO(dto);
@@ -63,7 +66,7 @@ public class UserService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> {
                 log.warn("User deletion failed: user not found for userId={}", userId);
-                return new IllegalArgumentException("User not found");
+                return new EntityNotFoundException("User", userId);
             });
 
         userRepository.delete(user);

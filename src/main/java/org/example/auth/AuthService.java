@@ -3,6 +3,7 @@ package org.example.auth;
 import lombok.extern.slf4j.Slf4j;
 import org.example.entity.user.UserDTO;
 import org.example.entity.user.User;
+import org.example.exception.AuthenticationException;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
 import org.example.util.LogUtil;
@@ -26,7 +27,7 @@ public class AuthService {
 
             .orElseThrow(() -> {
                 log.debug("Authentication failed: user not found for email={}", LogUtil.maskEmail(email));
-                return new IllegalStateException("Invalid email or password");
+                return new AuthenticationException("Invalid email or password");
             });
 
         if (!PasswordEncoder.matches(password, user.getPassword())) {
@@ -34,7 +35,7 @@ public class AuthService {
                 "Authentication failed: invalid credentials for email={}",
                 LogUtil.maskEmail(email)
             );
-            throw new IllegalStateException("Invalid email or password");
+            throw new AuthenticationException("Invalid email or password");
         }
 
         log.info("Authentication successful for userId={}", user.getId());

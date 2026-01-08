@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.auth.AuthService;
 import org.example.entity.user.UserDTO;
 import org.example.entity.user.User;
+import org.example.exception.AuthenticationException;
 import org.example.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ public class AuthServiceTest {
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-        Exception exception = assertThrows(IllegalStateException.class,
+        Exception exception = assertThrows(AuthenticationException.class,
             () -> authService.authenticate(email, "wrongpass"));
 
         assertEquals("Invalid email or password", exception.getMessage());
@@ -60,7 +61,7 @@ public class AuthServiceTest {
         String email = "unknown@email.com";
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(IllegalStateException.class,
+        Exception exception = assertThrows(AuthenticationException.class,
             () -> authService.authenticate(email, "password"));
 
         assertEquals("Invalid email or password", exception.getMessage());

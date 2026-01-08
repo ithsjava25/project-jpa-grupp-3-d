@@ -3,6 +3,9 @@ package org.example.service;
 import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
 import org.example.entity.user.User;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
+import org.example.exception.ValidationException;
 import org.example.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +50,7 @@ public class UserServiceTest {
 
         when(userRepository.existsByEmail(email)).thenReturn(true);
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception = assertThrows(BusinessRuleException.class, () -> {
             userService.register(
                 new CreateUserDTO(
                     "test", "test", email, "pass"
@@ -91,10 +94,10 @@ public class UserServiceTest {
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(IllegalArgumentException.class,
+        Exception exception = assertThrows(EntityNotFoundException.class,
             () -> userService.deleteUser(userId));
 
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("User not found with identifier: " + userId, exception.getMessage());
         verify(userRepository, never()).delete(any());
     }
 
@@ -102,7 +105,7 @@ public class UserServiceTest {
     void testRegisterUserWithInvalidEmail() {
         String invalidEmail = "invalid-email";
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception = assertThrows(ValidationException.class, () -> {
             userService.register(
                 new CreateUserDTO(
                     "John", "Doe", invalidEmail, "password123"
@@ -118,7 +121,7 @@ public class UserServiceTest {
         String email = "test@email.com";
         String shortPassword = "123";
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception = assertThrows(ValidationException.class, () -> {
             userService.register(
                 new CreateUserDTO(
                     "John", "Doe", email, shortPassword
