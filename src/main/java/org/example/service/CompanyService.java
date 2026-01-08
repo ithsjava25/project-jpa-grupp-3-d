@@ -39,6 +39,7 @@ public class CompanyService {
             throw new IllegalArgumentException("Company with orgNum " + dto.orgNum() + " already exists");
         }
 
+
         Company company = Company.fromDTO(dto);
         companyRepository.create(company);
 
