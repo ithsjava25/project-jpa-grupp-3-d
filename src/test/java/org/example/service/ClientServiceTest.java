@@ -5,6 +5,7 @@ import org.example.entity.client.Client;
 import org.example.entity.client.CreateClientDTO;
 import org.example.entity.client.UpdateClientDTO;
 import org.example.entity.company.Company;
+import org.example.exception.EntityNotFoundException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +44,7 @@ public class ClientServiceTest {
             "Client Street 1", "Country", "City", "0701234567"
         );
 
-        assertThrows(IllegalArgumentException.class, () -> clientService.createClient(dto));
+        assertThrows(EntityNotFoundException.class, () -> clientService.createClient(dto));
     }
 
     @Test
@@ -120,7 +121,7 @@ public class ClientServiceTest {
             clientId, "New", null, null, null, null, null, null
         );
 
-        assertThrows(Exception.class, () -> clientService.updateClient(dto));
+        assertThrows(EntityNotFoundException.class, () -> clientService.updateClient(dto));
     }
 
     @Test
@@ -128,6 +129,6 @@ public class ClientServiceTest {
         UUID clientId = UUID.randomUUID();
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
-        assertThrows(Exception.class, () -> clientService.deleteClient(clientId));
+        assertThrows(EntityNotFoundException.class, () -> clientService.deleteClient(clientId));
     }
 }
