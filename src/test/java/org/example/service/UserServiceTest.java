@@ -6,6 +6,7 @@ import org.example.entity.user.User;
 import org.example.exception.BusinessRuleException;
 import org.example.exception.EntityNotFoundException;
 import org.example.exception.ValidationException;
+import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,12 +20,13 @@ import static org.mockito.Mockito.*;
 public class UserServiceTest {
 
     private UserRepository userRepository;
+    private CompanyUserRepository companyUserRepository;
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        userService = new UserService(userRepository);
+        userService = new UserService(userRepository, companyUserRepository);
     }
 
     @Test

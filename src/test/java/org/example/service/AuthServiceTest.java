@@ -4,6 +4,7 @@ import org.example.auth.AuthService;
 import org.example.entity.user.UserDTO;
 import org.example.entity.user.User;
 import org.example.exception.AuthenticationException;
+import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,12 +18,13 @@ public class AuthServiceTest {
 
     private UserRepository userRepository;
     private UserService userService;
+    private CompanyUserRepository companyUserRepository;
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
-        userService = new UserService(userRepository);
+        userService = new UserService(userRepository, companyUserRepository);
         authService = new AuthService(userRepository, userService);
     }
 
