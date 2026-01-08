@@ -1,11 +1,11 @@
 package org.example.exception;
 
-public class AuthorizationException extends ApplicationException {
+public class AuthorizationException extends RuntimeException {
     public AuthorizationException(String message) {
         super(message);
     }
 
-    public AuthorizationException(String message, String errorCode) {
-        super(message, errorCode);
+    public AuthorizationException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
