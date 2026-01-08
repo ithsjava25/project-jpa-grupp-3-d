@@ -10,6 +10,7 @@ import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
 import org.example.exception.AuthenticationException;
 import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
 import org.example.exception.ValidationException;
 import org.example.repository.*;
 import org.example.service.*;
@@ -404,7 +405,7 @@ public class CliApp {
                     System.out.println("  ---");
                 }
             }
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Failed to list clients: " + e.getMessage());
         }
     }
@@ -451,8 +452,10 @@ public class CliApp {
             System.out.println("  ID: " + client.id());
             System.out.println("  Name: " + client.firstName() + " " + client.lastName());
 
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Client creation failed: " + e.getMessage());
+        } catch (ValidationException e) {
+            System.out.println("✗ Input Error: " + e.getMessage());
         }
     }
 
@@ -517,7 +520,9 @@ public class CliApp {
 
             System.out.println("✓ Client updated successfully!");
             System.out.println("  Name: " + updated.firstName() + " " + updated.lastName());
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            System.out.println("✗ Invalid ID format. Please enter a valid UUID.");
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Client update failed: " + e.getMessage());
         }
     }
@@ -552,7 +557,10 @@ public class CliApp {
             } else {
                 System.out.println("Deletion cancelled.");
             }
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            System.out.println("✗ Invalid ID format. Please enter a valid UUID.");
+
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Client deletion failed: " + e.getMessage());
         }
     }
