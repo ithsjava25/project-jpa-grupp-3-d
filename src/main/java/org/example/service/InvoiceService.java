@@ -3,6 +3,8 @@ package org.example.service;
 import org.example.entity.client.Client;
 import org.example.entity.company.Company;
 import org.example.entity.invoice.*;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.InvoiceRepository;
@@ -29,20 +31,14 @@ public class InvoiceService {
     public InvoiceDTO createInvoice(CreateInvoiceDTO dto) {
         if (invoiceRepository.findByInvoiceNumber(dto.number()).isPresent()) {
             log.warn("Invoice creation failed: Number {} is already in use for company {}", dto.number(), dto.companyId());
-            throw new IllegalArgumentException("Invoice number already in use: " + dto.number());
+            throw new BusinessRuleException("Invoice number already in use: " + dto.number());
         }
 
         Company company = companyRepository.findById(dto.companyId())
-            .orElseThrow(() -> {
-                log.warn("Create invoice failed: Company {} not found", dto.companyId());
-                return new IllegalArgumentException("Company not found");
-            });
+            .orElseThrow(() -> new EntityNotFoundException("Company", dto.companyId()));
 
         Client client = clientRepository.findById(dto.clientId())
-            .orElseThrow(() -> {
-                log.warn("Create invoice failed: Client {} not found", dto.clientId());
-                return new IllegalArgumentException("Client not found");
-            });
+            .orElseThrow(() -> new EntityNotFoundException("Client", dto.clientId()));
 
         Invoice invoice = Invoice.fromDTO(dto, company, client);
 
@@ -57,10 +53,7 @@ public class InvoiceService {
         log.info("Updating invoice ID: {}", dto.invoiceId());
 
         Invoice invoice = invoiceRepository.findByIdWithItems(dto.invoiceId())
-            .orElseThrow(() -> {
-                log.warn("Update failed: Invoice {} not found", dto.invoiceId());
-                return new IllegalArgumentException("Invoice not found");
-            });
+            .orElseThrow(() -> new EntityNotFoundException("Invoice", dto.invoiceId()));
 
         if (dto.dueDate() != null) invoice.setDueDate(dto.dueDate());
         if (dto.status() != null) invoice.setStatus(dto.status());
@@ -90,10 +83,8 @@ public class InvoiceService {
 
     public void updateStatus(UUID id, InvoiceStatus newStatus) {
         Invoice invoice = invoiceRepository.findById(id)
-            .orElseThrow(() -> {
-                log.warn("Update failed: Invoice {} not found", id);
-                return new IllegalArgumentException("Invoice not found");
-            });
+            .orElseThrow(() -> new EntityNotFoundException("Invoice", id));
+
         invoice.setStatus(newStatus);
         invoiceRepository.update(invoice);
         log.info("Invoice {} status successfully updated to {}", id, newStatus);
@@ -102,8 +93,7 @@ public class InvoiceService {
     public void deleteById(UUID id) {
         log.info("Attempting to delete invoice {}", id);
         if (!invoiceRepository.existsById(id)) {
-            log.warn("Delete failed: Invoice {} does not exist", id);
-            throw new IllegalArgumentException("Invoice not found");
+            throw new EntityNotFoundException("Invoice", id);
         }
         invoiceRepository.deleteById(id);
     }
