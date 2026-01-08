@@ -14,7 +14,7 @@ public class CompanyUserRepository extends BaseRepository<CompanyUser, CompanyUs
 
     public List<CompanyUser> findByCompanyId(UUID companyId) {
         return executeRead(em ->
-            em.createQuery("SELECT cu FROM CompanyUser cu WHERE cu.company.id = :companyId", CompanyUser.class)
+            em.createQuery("SELECT cu FROM CompanyUser cu JOIN FETCH cu.user WHERE cu.company.id = :companyId", CompanyUser.class)
                 .setParameter("companyId", companyId)
                 .getResultList()
         );
