@@ -8,6 +8,9 @@ import org.example.entity.client.UpdateClientDTO;
 import org.example.entity.invoice.*;
 import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
+import org.example.exception.AuthenticationException;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.ValidationException;
 import org.example.repository.*;
 import org.example.service.*;
 import org.example.auth.AuthService;
@@ -132,7 +135,8 @@ public class CliApp {
             currentUserId = currentUser.id();
             System.out.println("✓ Login successful! Welcome, " + currentUser.firstName() + " " + currentUser.lastName());
             return true;
-        } catch (Exception e) {
+
+        } catch (AuthenticationException e) {
             System.out.println("✗ Login failed: " + e.getMessage());
             return false;
         }
@@ -157,8 +161,17 @@ public class CliApp {
             currentUserId = currentUser.id();
             System.out.println("✓ Registration successful! Welcome, " + currentUser.firstName() + " " + currentUser.lastName());
             return true;
+
+        } catch (ValidationException e) {
+            System.out.println("✗ Invalid Registration Data: " + e.getMessage());
+            return false;
+
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ " + e.getMessage());
+            return false;
+
         } catch (Exception e) {
-            System.out.println("✗ Registration failed: " + e.getMessage());
+            System.out.println("✗ Something went wrong" + e.getMessage());
             return false;
         }
     }
