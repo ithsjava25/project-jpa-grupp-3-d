@@ -780,7 +780,7 @@ public class CliApp {
                 .build()
             );
 
-            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, null, updated, null));
             System.out.println("✓ Invoice item added");
         } catch (NumberFormatException e) {
             System.out.println("✗ Invalid price format.");
@@ -825,7 +825,7 @@ public class CliApp {
                     : i)
                 .toList();
 
-            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, null, updated, null));
             System.out.println("✓ Invoice item updated");
 
         } catch (NumberFormatException e) {
@@ -865,7 +865,7 @@ public class CliApp {
                 .filter(i -> !i.id().equals(item.id()))
                 .toList();
 
-            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, null, updated, null));
             System.out.println("✓ Invoice item removed");
 
         } catch (EntityNotFoundException e) {
