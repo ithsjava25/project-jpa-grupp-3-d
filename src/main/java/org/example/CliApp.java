@@ -10,6 +10,7 @@ import org.example.entity.user.CreateUserDTO;
 import org.example.entity.user.UserDTO;
 import org.example.exception.AuthenticationException;
 import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
 import org.example.exception.ValidationException;
 import org.example.repository.*;
 import org.example.service.*;
@@ -404,7 +405,7 @@ public class CliApp {
                     System.out.println("  ---");
                 }
             }
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Failed to list clients: " + e.getMessage());
         }
     }
@@ -451,8 +452,10 @@ public class CliApp {
             System.out.println("  ID: " + client.id());
             System.out.println("  Name: " + client.firstName() + " " + client.lastName());
 
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Client creation failed: " + e.getMessage());
+        } catch (ValidationException e) {
+            System.out.println("✗ Input Error: " + e.getMessage());
         }
     }
 
@@ -517,7 +520,9 @@ public class CliApp {
 
             System.out.println("✓ Client updated successfully!");
             System.out.println("  Name: " + updated.firstName() + " " + updated.lastName());
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            System.out.println("✗ Invalid ID format. Please enter a valid UUID.");
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Client update failed: " + e.getMessage());
         }
     }
@@ -552,7 +557,10 @@ public class CliApp {
             } else {
                 System.out.println("Deletion cancelled.");
             }
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            System.out.println("✗ Invalid ID format. Please enter a valid UUID.");
+
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Client deletion failed: " + e.getMessage());
         }
     }
@@ -589,69 +597,80 @@ public class CliApp {
                 System.out.println("There are currently no invoices under this company");
             }
             invoices.forEach(System.out::println);
-        } catch (Exception e) {
+        } catch (EntityNotFoundException e) {
             System.out.println("✗ Failed to list invoices: " + e.getMessage());
         }
     }
 
     private void createInvoice() {
-        System.out.println("\n--- Create Invoice ---");
+        try {
+            System.out.println("\n--- Create Invoice ---");
 
-        List<ClientDTO> clients = clientService.getClientsByCompany(currentCompanyId);
 
-        if (clients.isEmpty()) {
-            System.out.println("No clients found for this company, please create a client first");
-            return;
+            List<ClientDTO> clients = clientService.getClientsByCompany(currentCompanyId);
+
+            if (clients.isEmpty()) {
+                System.out.println("No clients found for this company, please create a client first");
+                return;
+            }
+
+            for (int i = 0; i < clients.size(); i++) {
+                ClientDTO client = clients.get(i);
+                System.out.println((i + 1) + ".");
+                System.out.println("  ID: " + client.id());
+                System.out.println("  Name: " + client.firstName() + " " + client.lastName());
+                System.out.println("  Email: " + client.email());
+                System.out.println("  City: " + client.city());
+                System.out.println("  ---");
+            }
+
+            System.out.print("Select client number: ");
+            int clientIndex = readInt() - 1;
+
+            if (clientIndex < 0 || clientIndex >= clients.size()) {
+                System.out.println("Invalid client selection");
+                return;
+            }
+
+            ClientDTO selectedClient = clients.get(clientIndex);
+
+            System.out.print("Invoice Number: ");
+            String invoiceNumber = scanner.nextLine().trim();
+
+            System.out.print("Due date (yyyy-MM-dd): ");
+            String input = scanner.nextLine().trim();
+
+            LocalDate dueDate = LocalDate.parse(input);
+            LocalDateTime dueDateTime = dueDate.atTime(23, 59);
+
+
+            List<InvoiceItemDTO> items = readInvoiceItems();
+
+            if (items.isEmpty()) {
+                System.out.println("Invoice must have at least one item");
+                return;
+            }
+
+            CreateInvoiceDTO dto = new CreateInvoiceDTO(
+                currentCompanyId,
+                selectedClient.id(),
+                invoiceNumber,
+                dueDateTime,
+                items
+            );
+
+            invoiceService.createInvoice(dto);
+
+            System.out.println("✓ Invoice created");
+        }catch (java.time.format.DateTimeParseException e) {
+            System.out.println("✗ Invalid date format. Please use yyyy-MM-dd.");
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Business Rule Violation: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Creation failed: " + e.getMessage());
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage());
         }
-
-        for (int i = 0; i < clients.size(); i++) {
-            ClientDTO client = clients.get(i);
-            System.out.println((i + 1) + ".");
-            System.out.println("  ID: " + client.id());
-            System.out.println("  Name: " + client.firstName() + " " + client.lastName());
-            System.out.println("  Email: " + client.email());
-            System.out.println("  City: " + client.city());
-            System.out.println("  ---");
-        }
-
-        System.out.print("Select client number: ");
-        int clientIndex = readInt() - 1;
-
-        if (clientIndex < 0 || clientIndex >= clients.size()) {
-            System.out.println("Invalid client selection");
-            return;
-        }
-
-        ClientDTO selectedClient = clients.get(clientIndex);
-
-        System.out.print("Invoice Number: ");
-        String invoiceNumber = scanner.nextLine().trim();
-
-        System.out.print("Due date (yyyy-MM-dd): ");
-        String input = scanner.nextLine().trim();
-
-        LocalDate dueDate = LocalDate.parse(input);
-        LocalDateTime dueDateTime = dueDate.atTime(23, 59);
-
-
-        List<InvoiceItemDTO> items = readInvoiceItems();
-
-        if (items.isEmpty()) {
-            System.out.println("Invoice must have at least one item");
-            return;
-        }
-
-        CreateInvoiceDTO dto = new CreateInvoiceDTO(
-            currentCompanyId,
-            selectedClient.id(),
-            invoiceNumber,
-            dueDateTime,
-            items
-        );
-
-        invoiceService.createInvoice(dto);
-
-        System.out.println("✓ Invoice created");
     }
 
     private List<InvoiceItemDTO> readInvoiceItems() {
@@ -692,7 +711,11 @@ public class CliApp {
             invoiceService.updateStatus(invoice.id(), status);
             System.out.println("✓ Invoice status updated successfully!");
         } catch (IllegalArgumentException e) {
-            System.out.println("✗ Invalid status. Please enter one of the available options.");
+            System.out.println("✗ Invalid status name. Please try again.");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Status update failed: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ " + e.getMessage());
         }
     }
 
@@ -735,21 +758,27 @@ public class CliApp {
         InvoiceDTO invoice = selectInvoice();
         if (invoice == null) return;
 
-        System.out.print("Quantity: ");
-        int quantity = readInt();
+        try {
+            System.out.print("Quantity: ");
+            int quantity = readInt();
 
-        System.out.print("Unit price: ");
-        BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
+            System.out.print("Unit price: ");
+            BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
 
-        List<InvoiceItemDTO> updated = new ArrayList<>(invoice.items());
-        updated.add(InvoiceItemDTO.builder()
-            .quantity(quantity)
-            .unitPrice(unitPrice)
-            .build()
-        );
+            List<InvoiceItemDTO> updated = new ArrayList<>(invoice.items());
+            updated.add(InvoiceItemDTO.builder()
+                .quantity(quantity)
+                .unitPrice(unitPrice)
+                .build()
+            );
 
-        invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
-        System.out.println("✓ Invoice item added");
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            System.out.println("✓ Invoice item added");
+        } catch (NumberFormatException e) {
+            System.out.println("✗ Invalid price format.");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Failed to add item: " + e.getMessage());
+        }
     }
 
     private void updateInvoiceItem() {
@@ -775,18 +804,29 @@ public class CliApp {
 
         InvoiceItemDTO item = items.get(index);
 
-        System.out.print("New Quantity: ");
-        int quantity = readInt();
+        try {
+            System.out.print("New Quantity: ");
+            int quantity = readInt();
 
-        System.out.print("New Unit Price: ");
-        BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
+            System.out.print("New Unit Price: ");
+            BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
 
-        List<InvoiceItemDTO> updated = items.stream()
-            .map(i -> i.id().equals(item.id()) ? InvoiceItemDTO.builder().id(i.id()).quantity(quantity).unitPrice(unitPrice).build() : i)
-            .toList();
+            List<InvoiceItemDTO> updated = items.stream()
+                .map(i -> i.id().equals(item.id())
+                    ? InvoiceItemDTO.builder().id(i.id()).quantity(quantity).unitPrice(unitPrice).build()
+                    : i)
+                .toList();
 
-        invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
-        System.out.println("✓ Invoice item updated");
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            System.out.println("✓ Invoice item updated");
+
+        } catch (NumberFormatException e) {
+            System.out.println("✗ Invalid price format. Please use numbers.");
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Update failed: " + e.getMessage());
+        } catch (ValidationException e) {
+            System.out.println("✗ Validation error: " + e.getMessage());
+        }
     }
 
     private void removeInvoiceItem() {
@@ -812,12 +852,19 @@ public class CliApp {
 
         InvoiceItemDTO item = items.get(index);
 
-        List<InvoiceItemDTO> updated = items.stream()
-            .filter(i -> !i.id().equals(item.id()))
-            .toList();
+        try {
+            List<InvoiceItemDTO> updated = items.stream()
+                .filter(i -> !i.id().equals(item.id()))
+                .toList();
 
-        invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
-        System.out.println("✓ Invoice item removed");
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            System.out.println("✓ Invoice item removed");
+
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Removal failed: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Rule violation: " + e.getMessage());
+        }
     }
 
     private void deleteInvoice() {
@@ -828,8 +875,14 @@ public class CliApp {
         String confirm = scanner.nextLine().trim().toLowerCase();
 
         if ("yes".equals(confirm)) {
-            invoiceService.deleteById(invoice.id());
-            System.out.println("✓ Invoice deleted successfully!");
+            try {
+                invoiceService.deleteById(invoice.id());
+                System.out.println("✓ Invoice deleted successfully!");
+            } catch (EntityNotFoundException e) {
+                System.out.println("✗ Deletion failed: " + e.getMessage());
+            } catch (BusinessRuleException e) {
+                System.out.println("✗ Cannot delete: " + e.getMessage());
+            }
         } else {
             System.out.println("Deletion cancelled.");
         }

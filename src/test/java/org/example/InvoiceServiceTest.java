@@ -4,6 +4,8 @@ import org.example.entity.invoice.InvoiceDTO;
 import org.example.entity.company.Company;
 import org.example.entity.client.Client;
 import org.example.entity.invoice.*;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.InvoiceRepository;
@@ -37,6 +39,7 @@ public class InvoiceServiceTest {
             companyRepository,
             clientRepository
         );
+
     }
 
     //Success cases
@@ -153,7 +156,7 @@ public class InvoiceServiceTest {
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(dto));
+        assertThrows(EntityNotFoundException.class, () -> invoiceService.createInvoice(dto));
         verify(invoiceRepository, never()).create(any());
     }
 
@@ -166,7 +169,7 @@ public class InvoiceServiceTest {
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(new Company()));
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(dto));
+        assertThrows(EntityNotFoundException.class, () -> invoiceService.createInvoice(dto));
         verify(invoiceRepository, never()).create(any());
     }
 
@@ -177,7 +180,7 @@ public class InvoiceServiceTest {
 
         when(invoiceRepository.findByIdWithItems(id)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> invoiceService.updateInvoice(dto));
+        assertThrows(EntityNotFoundException.class, () -> invoiceService.updateInvoice(dto));
         verify(invoiceRepository, never()).update(any());
     }
 
@@ -186,7 +189,7 @@ public class InvoiceServiceTest {
         UUID id = UUID.randomUUID();
         when(invoiceRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> invoiceService.updateStatus(id, InvoiceStatus.PAID));
+        assertThrows(EntityNotFoundException.class, () -> invoiceService.updateStatus(id, InvoiceStatus.PAID));
         verify(invoiceRepository, never()).update(any());
     }
 
@@ -195,7 +198,7 @@ public class InvoiceServiceTest {
     void testDeleteById_NotFound() {
         UUID id = UUID.randomUUID();
         when(invoiceRepository.existsById(id)).thenReturn(false);
-        assertThrows(IllegalArgumentException.class, () -> invoiceService.deleteById(id));
+        assertThrows(EntityNotFoundException.class, () -> invoiceService.deleteById(id));
         verify(invoiceRepository, never()).deleteById(any());
     }
 
@@ -203,7 +206,7 @@ public class InvoiceServiceTest {
     void testCreateInvoice_NumberAlreadyExists() {
         CreateInvoiceDTO createDto = new CreateInvoiceDTO(UUID.randomUUID(), UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), List.of());
         when(invoiceRepository.findByInvoiceNumber("INV-EXIST")).thenReturn(Optional.of(new Invoice()));
-        assertThrows(IllegalArgumentException.class, () -> invoiceService.createInvoice(createDto));
+        assertThrows(BusinessRuleException.class, () -> invoiceService.createInvoice(createDto));
     }
 
     private Invoice createFullInvoice(UUID id, String number) {

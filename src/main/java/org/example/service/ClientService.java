@@ -5,6 +5,7 @@ import org.example.entity.client.Client;
 import org.example.entity.company.Company;
 import org.example.entity.client.CreateClientDTO;
 import org.example.entity.client.UpdateClientDTO;
+import org.example.exception.EntityNotFoundException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 
@@ -34,9 +35,7 @@ public class ClientService {
     public ClientDTO createClient(CreateClientDTO dto) {
 
         Company company = companyRepository.findById(dto.companyId())
-            .orElseThrow(() ->
-                new IllegalArgumentException("Company not found with id: " + dto.companyId())
-            );
+            .orElseThrow(() -> new EntityNotFoundException("Company", dto.companyId()));
 
         Client client = Client.fromDTO(dto, company);
 
@@ -48,9 +47,7 @@ public class ClientService {
     public ClientDTO updateClient(UpdateClientDTO dto) {
 
         Client client = clientRepository.findById(dto.clientId())
-            .orElseThrow(() ->
-                new IllegalArgumentException("Client not found with id: " + dto.clientId())
-            );
+            .orElseThrow(() -> new EntityNotFoundException("Client", dto.clientId()));
 
         if (dto.firstName() != null) {
             client.setFirstName(dto.firstName());
@@ -81,7 +78,7 @@ public class ClientService {
 
     public void deleteClient(UUID clientId) {
         Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new IllegalArgumentException("Client not found with id: " + clientId));
+            .orElseThrow(() -> new EntityNotFoundException("Client", clientId));
 
         clientRepository.delete(client);
     }
