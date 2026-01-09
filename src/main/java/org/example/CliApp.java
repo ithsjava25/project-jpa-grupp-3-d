@@ -763,6 +763,9 @@ public class CliApp {
         if (invoice == null) return;
 
         try {
+            System.out.print("Item name: ");
+            String name = scanner.nextLine().trim();
+
             System.out.print("Quantity: ");
             int quantity = readInt();
 
@@ -771,6 +774,7 @@ public class CliApp {
 
             List<InvoiceItemDTO> updated = new ArrayList<>(invoice.items());
             updated.add(InvoiceItemDTO.builder()
+                .name(name)
                 .quantity(quantity)
                 .unitPrice(unitPrice)
                 .build()

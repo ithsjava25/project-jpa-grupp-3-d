@@ -15,6 +15,7 @@ public record InvoiceItemDTO(
     public static InvoiceItemDTO fromEntity(InvoiceItem item) {
         return InvoiceItemDTO.builder()
             .id(item.getId())
+            .name(item.getName())
             .quantity(item.getQuantity())
             .unitPrice(item.getUnitPrice())
             .build();

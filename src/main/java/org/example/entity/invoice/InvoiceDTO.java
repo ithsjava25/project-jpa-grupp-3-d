@@ -14,6 +14,7 @@ public record InvoiceDTO(
     UUID clientId,
     String number,
     BigDecimal amount,
+    BigDecimal vatAmount,
     LocalDateTime dueDate,
     LocalDateTime createdAt,
     InvoiceStatus status,
@@ -30,6 +31,7 @@ public record InvoiceDTO(
             .clientId(invoice.getClient().getId())
             .number(invoice.getNumber())
             .amount(invoice.getAmount())
+            .vatAmount(invoice.getVatAmount())
             .dueDate(invoice.getDueDate())
             .createdAt(invoice.getCreatedAt())
             .status(invoice.getStatus())

@@ -68,11 +68,13 @@ public class Invoice {
     }
 
     public void recalcTotals() {
+        BigDecimal currentVat = (this.vatAmount != null) ? this.vatAmount : BigDecimal.ZERO;
+
         BigDecimal subTotal = invoiceItems.stream()
             .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        this.amount = subTotal.add(this.vatAmount);
+        this.amount = subTotal.add(currentVat);
     }
 
     public static Invoice fromDTO(CreateInvoiceDTO dto, Company company, Client client) {

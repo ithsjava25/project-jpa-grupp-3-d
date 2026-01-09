@@ -57,12 +57,14 @@ public class InvoiceService {
 
         if (dto.dueDate() != null) invoice.setDueDate(dto.dueDate());
         if (dto.status() != null) invoice.setStatus(dto.status());
+        if (dto.vatAmount() != null) invoice.setVatAmount(dto.vatAmount());
 
         if (dto.items() != null) {
             log.debug("Refreshing items for invoice {}. New item count: {}", dto.invoiceId(), dto.items().size());
             invoice.clearItems();
             dto.items().forEach(itemDTO -> {
                 InvoiceItem item = new InvoiceItem();
+                item.setName(itemDTO.name());
                 item.setQuantity(itemDTO.quantity());
                 item.setUnitPrice(itemDTO.unitPrice());
                 invoice.addItem(item);
