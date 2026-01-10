@@ -289,16 +289,26 @@ public class CliApp {
             System.out.println("  You have been automatically associated with this company.");
             return true;
 
-        } catch (Exception e) {
-            System.out.println("✗ Company creation failed: " + e.getMessage());
+        } catch (ValidationException e) {
+            System.out.println("✗ Invalid input: " + e.getMessage());
+            return false;
+
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ " + e.getMessage());
+            return false;
+
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Creator user not found.");
             return false;
         }
     }
 
+
     private boolean selectCompany() {
         try {
             // Get all companies the user is associated with
-            List<CompanyUser> userCompanies = companyUserService.getUserCompanies(currentUserId);
+            List<CompanyUser> userCompanies =
+                companyUserService.getUserCompanies(currentUserId);
 
             if (userCompanies.isEmpty()) {
                 System.out.println("✗ You are not associated with any companies.");
@@ -324,13 +334,21 @@ public class CliApp {
             Company selectedCompany = userCompanies.get(choice - 1).getCompany();
             currentCompany = CompanyDTO.fromEntity(selectedCompany);
             currentCompanyId = currentCompany.id();
-            System.out.println("✓ Company selected: " + currentCompany.name() + " (" + currentCompany.orgNum() + ")");
+
+            System.out.println("✓ Company selected: " +
+                currentCompany.name() + " (" + currentCompany.orgNum() + ")");
             return true;
-        } catch (Exception e) {
-            System.out.println("✗ Failed to select company: " + e.getMessage());
+
+        } catch (ValidationException e) {
+            System.out.println("✗ Invalid request: " + e.getMessage());
+            return false;
+
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Company not found.");
             return false;
         }
     }
+
 
     private void mainMenu() {
         while (true) {
