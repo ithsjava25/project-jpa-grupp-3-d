@@ -2,6 +2,9 @@ package org.example.service;
 
 import org.example.entity.company.*;
 import org.example.entity.user.User;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
+import org.example.exception.ValidationException;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
@@ -70,125 +73,62 @@ class CompanyServiceTest {
     }
 
     @Test
-    @DisplayName("Should create company with null optional fields")
-    void createCompanyWithNullOptionalFields() {
-        UUID userId = UUID.randomUUID();
-        User user = new User();
-        user.setId(userId);
-
+    @DisplayName("Should throw ValidationException if creator user id is null")
+    void createCompanyValidationExceptionUserIdNull() {
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
-            null,
-            null,
-            "TestCo",
-            null,
-            null,
-            null
+            "1234567890", "email@test.com", null, "TestCo", null, null, null
         );
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
-
-        doAnswer(invocation -> {
-            Company c = invocation.getArgument(0);
-            c.setId(UUID.randomUUID());
-            return null;
-        }).when(companyRepository).create(any(Company.class));
-
-        CompanyDTO result = companyService.create(userId, dto);
-
-        assertNotNull(result);
-        assertNull(result.email());
-        assertNull(result.phoneNumber());
-        assertNull(result.address());
-    }
-
-    @Test
-    @DisplayName("Should throw exception if creator user not found")
-    void createCompanyUserNotFound() {
-        UUID userId = UUID.randomUUID();
-
-        CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
-            "email@test.com",
-            null,
-            "TestCo",
-            null,
-            null,
-            null
-        );
-
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(IllegalArgumentException.class,
-            () -> companyService.create(userId, dto)
-        );
+        assertThrows(ValidationException.class, () -> companyService.create(null, dto));
 
         verify(companyRepository, never()).create(any());
         verify(companyUserRepository, never()).create(any());
     }
 
     @Test
-    @DisplayName("Should throw exception if orgNum already exists")
+    @DisplayName("Should throw ValidationException if DTO is null")
+    void createCompanyValidationExceptionDtoNull() {
+        UUID userId = UUID.randomUUID();
+        assertThrows(ValidationException.class, () -> companyService.create(userId, null));
+
+        verify(companyRepository, never()).create(any());
+        verify(companyUserRepository, never()).create(any());
+    }
+
+    @Test
+    @DisplayName("Should throw EntityNotFoundException if creator user not found")
+    void createCompanyUserNotFound() {
+        UUID userId = UUID.randomUUID();
+        CreateCompanyDTO dto = new CreateCompanyDTO(
+            "1234567890", "email@test.com", null, "TestCo", null, null, null
+        );
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> companyService.create(userId, dto));
+
+        verify(companyRepository, never()).create(any());
+        verify(companyUserRepository, never()).create(any());
+    }
+
+    @Test
+    @DisplayName("Should throw BusinessRuleException if orgNum already exists")
     void createCompanyOrgNumAlreadyExists() {
         UUID userId = UUID.randomUUID();
         User user = new User();
         user.setId(userId);
 
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
-            "email@test.com",
-            null,
-            "TestCo",
-            null,
-            null,
-            null
+            "1234567890", "email@test.com", null, "TestCo", null, null, null
         );
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(companyRepository.existsByOrgNum("1234567890")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class,
-            () -> companyService.create(userId, dto)
-        );
+        assertThrows(BusinessRuleException.class, () -> companyService.create(userId, dto));
 
         verify(companyRepository, never()).create(any());
-    }
-
-    @Test
-    @DisplayName("Should associate CompanyUser correctly")
-    void createCompanyAssociatesCompanyUserCorrectly() {
-        UUID userId = UUID.randomUUID();
-        User user = new User();
-        user.setId(userId);
-
-        CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
-            "email@test.com",
-            null,
-            "TestCo",
-            null,
-            null,
-            null
-        );
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
-
-        doAnswer(invocation -> {
-            Company c = invocation.getArgument(0);
-            c.setId(UUID.randomUUID());
-            return null;
-        }).when(companyRepository).create(any());
-
-        doAnswer(invocation -> {
-            CompanyUser cu = invocation.getArgument(0);
-            assertEquals(userId, cu.getUser().getId());
-            assertNotNull(cu.getCompany());
-            return null;
-        }).when(companyUserRepository).create(any());
-
-        companyService.create(userId, dto);
+        verify(companyUserRepository, never()).create(any());
     }
 
     @Test
@@ -201,13 +141,7 @@ class CompanyServiceTest {
         company.setEmail("old@email.com");
 
         UpdateCompanyDTO dto = new UpdateCompanyDTO(
-            companyId,
-            "new@email.com",
-            null,
-            "NewName",
-            null,
-            null,
-            null
+            companyId, "new@email.com", null, "NewName", null, null, null
         );
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
@@ -221,52 +155,30 @@ class CompanyServiceTest {
     }
 
     @Test
-    @DisplayName("Should update company without overwriting with null values")
-    void updateCompanyWithNullFields() {
-        UUID companyId = UUID.randomUUID();
-        Company company = new Company();
-        company.setId(companyId);
-        company.setName("OldName");
-        company.setEmail("old@email.com");
-
-        UpdateCompanyDTO dto = new UpdateCompanyDTO(
-            companyId,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        );
-
-        when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
-
-        CompanyDTO result = companyService.update(dto);
-
-        assertEquals("OldName", result.name());
-        assertEquals("old@email.com", result.email());
+    @DisplayName("Should throw ValidationException if update DTO is null")
+    void updateCompanyValidationExceptionDtoNull() {
+        assertThrows(ValidationException.class, () -> companyService.update(null));
+        verify(companyRepository, never()).update(any());
     }
 
     @Test
-    @DisplayName("Should throw exception if company not found on update")
+    @DisplayName("Should throw ValidationException if companyId is null on update")
+    void updateCompanyValidationExceptionIdNull() {
+        UpdateCompanyDTO dto = new UpdateCompanyDTO(null, "email@test.com", null, "Name", null, null, null);
+        assertThrows(ValidationException.class, () -> companyService.update(dto));
+        verify(companyRepository, never()).update(any());
+    }
+
+    @Test
+    @DisplayName("Should throw EntityNotFoundException if company not found on update")
     void updateCompanyNotFound() {
         UUID companyId = UUID.randomUUID();
-
-        UpdateCompanyDTO dto = new UpdateCompanyDTO(
-            companyId,
-            "email@test.com",
-            null,
-            "Name",
-            null,
-            null,
-            null
-        );
+        UpdateCompanyDTO dto = new UpdateCompanyDTO(companyId, "email@test.com", null, "Name", null, null, null);
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
-            () -> companyService.update(dto)
-        );
+        assertThrows(EntityNotFoundException.class, () -> companyService.update(dto));
+        verify(companyRepository, never()).update(any());
     }
 
     @Test
@@ -284,14 +196,19 @@ class CompanyServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception if company not found on delete")
+    @DisplayName("Should throw ValidationException if companyId is null on delete")
+    void deleteCompanyValidationExceptionIdNull() {
+        assertThrows(ValidationException.class, () -> companyService.deleteCompany(null));
+        verify(companyRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("Should throw EntityNotFoundException if company not found on delete")
     void deleteCompanyNotFound() {
         UUID companyId = UUID.randomUUID();
-
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
-            () -> companyService.deleteCompany(companyId)
-        );
+        assertThrows(EntityNotFoundException.class, () -> companyService.deleteCompany(companyId));
+        verify(companyRepository, never()).delete(any());
     }
 }

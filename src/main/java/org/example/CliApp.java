@@ -965,10 +965,13 @@ public class CliApp {
                     System.out.println("  ---");
                 }
             }
-        } catch (Exception e) {
-            System.out.println("✗ Failed to list company users: " + e.getMessage());
+        } catch (ValidationException e) {
+            System.out.println("✗ Invalid request: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Company not found.");
         }
     }
+
 
     private void addUserToCompany() {
         System.out.print("\nEnter user email to invite: ");
@@ -977,13 +980,17 @@ public class CliApp {
         try {
             companyUserService.addUserToCompanyByEmail(currentCompanyId, email);
             System.out.println("✓ User added to company successfully!");
-        } catch (Exception e) {
-            System.out.println("✗ Failed to add user: " + e.getMessage());
+        } catch (ValidationException e) {
+            System.out.println("✗ Invalid input: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Company or user not found: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Business rule violation: " + e.getMessage());
         }
     }
 
+
     private void removeUserFromCompany() {
-        // List users first to make selection easier
         try {
             List<CompanyUser> companyUsers = companyUserService.getCompanyUsers(currentCompanyId);
             if (companyUsers.isEmpty()) {
@@ -1010,14 +1017,20 @@ public class CliApp {
                 System.out.println("✗ Cannot remove yourself from the current company.");
                 System.out.println("  Switch to another company first, or have another user remove you.");
                 return;
-                }
+            }
 
             companyUserService.deleteUserFromCompany(currentCompanyId, userId);
             System.out.println("✓ User removed from company successfully!");
-        } catch (Exception e) {
-            System.out.println("✗ Failed to remove user: " + e.getMessage());
+
+        } catch (ValidationException e) {
+            System.out.println("✗ Invalid request: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            System.out.println("✗ Company or user not found: " + e.getMessage());
+        } catch (BusinessRuleException e) {
+            System.out.println("✗ Business rule violation: " + e.getMessage());
         }
     }
+
 
     private void companySettingsMenu() {
         while (true) {
