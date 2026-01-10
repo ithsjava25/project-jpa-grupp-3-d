@@ -51,6 +51,7 @@ public class CompanyService {
         return CompanyDTO.fromEntity(company);
     }
 
+
     public CompanyDTO update(UpdateCompanyDTO dto) {
         if (dto.companyId() == null) throw new IllegalArgumentException("Company id cannot be null");
 
