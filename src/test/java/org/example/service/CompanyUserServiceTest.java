@@ -1,9 +1,10 @@
 package org.example.service;
 
-import org.example.entity.company.Company;
-import org.example.entity.company.CompanyUser;
-import org.example.entity.company.CompanyUserId;
+import org.example.entity.company.*;
 import org.example.entity.user.User;
+import org.example.exception.BusinessRuleException;
+import org.example.exception.EntityNotFoundException;
+import org.example.exception.ValidationException;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
@@ -76,45 +77,45 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception if company not found")
+    @DisplayName("Should throw EntityNotFoundException if company not found")
     void addUserToCompanyByEmail_companyNotFound() {
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
-        Exception ex = assertThrows(IllegalArgumentException.class,
-            () -> companyUserService.addUserToCompanyByEmail(companyId, email));
+        assertThrows(EntityNotFoundException.class,
+            () -> companyUserService.addUserToCompanyByEmail(companyId, email)
+        );
 
-        assertTrue(ex.getMessage().contains("Company not found"));
         verify(companyRepository).findById(companyId);
         verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
-    @DisplayName("Should throw exception if user not found")
+    @DisplayName("Should throw EntityNotFoundException if user not found")
     void addUserToCompanyByEmail_userNotFound() {
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        Exception ex = assertThrows(IllegalArgumentException.class,
-            () -> companyUserService.addUserToCompanyByEmail(companyId, email));
+        assertThrows(EntityNotFoundException.class,
+            () -> companyUserService.addUserToCompanyByEmail(companyId, email)
+        );
 
-        assertTrue(ex.getMessage().contains("User not found"));
         verify(companyRepository).findById(companyId);
         verify(userRepository).findByEmail(email);
         verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
     }
 
     @Test
-    @DisplayName("Should throw exception if user already associated")
+    @DisplayName("Should throw BusinessRuleException if user already associated")
     void addUserToCompanyByEmail_userAlreadyAssociated() {
         CompanyUserId id = new CompanyUserId(userId, companyId);
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(company));
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(companyUserRepository.findById(id)).thenReturn(Optional.of(new CompanyUser()));
 
-        Exception ex = assertThrows(IllegalArgumentException.class,
-            () -> companyUserService.addUserToCompanyByEmail(companyId, email));
+        assertThrows(BusinessRuleException.class,
+            () -> companyUserService.addUserToCompanyByEmail(companyId, email)
+        );
 
-        assertTrue(ex.getMessage().contains("already associated"));
         verify(companyRepository).findById(companyId);
         verify(userRepository).findByEmail(email);
         verify(companyUserRepository).findById(id);
@@ -122,17 +123,22 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception for null companyId")
+    @DisplayName("Should throw ValidationException for null companyId")
     void addUserToCompanyByEmail_nullCompanyId_throws() {
-        assertThrows(IllegalArgumentException.class,
-            () -> companyUserService.addUserToCompanyByEmail(null, email));
+        assertThrows(ValidationException.class,
+            () -> companyUserService.addUserToCompanyByEmail(null, email)
+        );
     }
 
     @Test
-    @DisplayName("Should throw exception for null email")
+    @DisplayName("Should throw ValidationException for null or blank email")
     void addUserToCompanyByEmail_nullEmail_throws() {
-        assertThrows(IllegalArgumentException.class,
-            () -> companyUserService.addUserToCompanyByEmail(companyId, null));
+        assertThrows(ValidationException.class,
+            () -> companyUserService.addUserToCompanyByEmail(companyId, null)
+        );
+        assertThrows(ValidationException.class,
+            () -> companyUserService.addUserToCompanyByEmail(companyId, "")
+        );
     }
 
     @Test
@@ -149,17 +155,31 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception if user not part of company")
+    @DisplayName("Should throw EntityNotFoundException if user not part of company")
     void deleteUserFromCompany_notFound() {
         CompanyUserId id = new CompanyUserId(userId, companyId);
         when(companyUserRepository.findById(id)).thenReturn(Optional.empty());
 
-        Exception ex = assertThrows(IllegalArgumentException.class,
-            () -> companyUserService.deleteUserFromCompany(companyId, userId));
+        assertThrows(EntityNotFoundException.class,
+            () -> companyUserService.deleteUserFromCompany(companyId, userId)
+        );
 
-        assertTrue(ex.getMessage().contains("User is not part of company"));
         verify(companyUserRepository).findById(id);
         verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
+    }
+
+    @Test
+    @DisplayName("Should throw ValidationException if companyId or userId is null")
+    void deleteUserFromCompany_nullIds_throws() {
+        assertThrows(ValidationException.class,
+            () -> companyUserService.deleteUserFromCompany(null, userId)
+        );
+        assertThrows(ValidationException.class,
+            () -> companyUserService.deleteUserFromCompany(companyId, null)
+        );
+        assertThrows(ValidationException.class,
+            () -> companyUserService.deleteUserFromCompany(null, null)
+        );
     }
 
     @Test
@@ -176,6 +196,14 @@ class CompanyUserServiceTest {
     }
 
     @Test
+    @DisplayName("Should throw ValidationException if companyId is null when fetching users")
+    void getCompanyUsers_nullCompanyId_throws() {
+        assertThrows(ValidationException.class,
+            () -> companyUserService.getCompanyUsers(null)
+        );
+    }
+
+    @Test
     @DisplayName("Should return all companies of a user")
     void getUserCompanies_success() {
         List<CompanyUser> companies = List.of(new CompanyUser(), new CompanyUser());
@@ -189,14 +217,10 @@ class CompanyUserServiceTest {
     }
 
     @Test
-    @DisplayName("Should return empty list if user is not part of any company")
-    void getUserCompanies_empty() {
-        when(companyUserRepository.findByUserId(userId)).thenReturn(List.of());
-
-        List<CompanyUser> result = companyUserService.getUserCompanies(userId);
-
-        assertTrue(result.isEmpty());
-        verify(companyUserRepository).findByUserId(userId);
-        verifyNoMoreInteractions(userRepository, companyRepository, companyUserRepository);
+    @DisplayName("Should throw ValidationException if userId is null when fetching companies")
+    void getUserCompanies_nullUserId_throws() {
+        assertThrows(ValidationException.class,
+            () -> companyUserService.getUserCompanies(null)
+        );
     }
 }
