@@ -716,6 +716,10 @@ public class CliApp {
 
             System.out.print("Item name (e.g. 'Consulting hours'): ");
             String name = scanner.nextLine().trim();
+            if (name.isEmpty()) {
+                System.out.println("✗ Item name cannot be empty.");
+                continue;
+            }
 
             System.out.print("Quantity: ");
             int quantity = readInt();
