@@ -41,6 +41,7 @@ public class InvoiceService {
             .orElseThrow(() -> new EntityNotFoundException("Client", dto.clientId()));
 
         Invoice invoice = Invoice.fromDTO(dto, company, client);
+        log.info("Creating invoice for client ID: {}", client.getId());
 
         Invoice saved = invoiceRepository.create(invoice);
         log.info("Successfully created invoice {} (ID: {}) for company {}", saved.getNumber(), saved.getId(), dto.companyId());
@@ -57,12 +58,14 @@ public class InvoiceService {
 
         if (dto.dueDate() != null) invoice.setDueDate(dto.dueDate());
         if (dto.status() != null) invoice.setStatus(dto.status());
+        if (dto.vatRate() != null) invoice.setVatRate(dto.vatRate());
 
         if (dto.items() != null) {
             log.debug("Refreshing items for invoice {}. New item count: {}", dto.invoiceId(), dto.items().size());
             invoice.clearItems();
             dto.items().forEach(itemDTO -> {
                 InvoiceItem item = new InvoiceItem();
+                item.setName(itemDTO.name());
                 item.setQuantity(itemDTO.quantity());
                 item.setUnitPrice(itemDTO.unitPrice());
                 invoice.addItem(item);

@@ -39,6 +39,9 @@ public class Invoice {
     @Column(name= "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
+    @Column(name = "vat_rate", precision = 5, scale = 4)
+    private BigDecimal vatRate;
+
     private BigDecimal vatAmount;
 
     @Column(name= "due_date")
@@ -68,12 +71,22 @@ public class Invoice {
     }
 
     public void recalcTotals() {
-        amount = invoiceItems.stream()
-            .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+        BigDecimal subTotal = invoiceItems.stream()
+            .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal vat = (vatRate != null ? vatRate : BigDecimal.ZERO)
+            .multiply(subTotal);
+        this.vatAmount = vat;
+        this.amount = subTotal.add(vat);
     }
 
     public static Invoice fromDTO(CreateInvoiceDTO dto, Company company, Client client) {
+        if (dto.vatRate() != null) {
+            if (dto.vatRate().compareTo(BigDecimal.ZERO) < 0 || dto.vatRate().compareTo(BigDecimal.ONE) > 0) {
+                throw new IllegalArgumentException("VAT rate must be between 0.0 and 1.0 (e.g., 0.25 for 25%)");
+            }
+        }
         Invoice invoice = Invoice.builder()
             .company(company)
             .client(client)
@@ -82,12 +95,13 @@ public class Invoice {
             .status(InvoiceStatus.CREATED)
             .invoiceItems(new ArrayList<>())
             .amount(BigDecimal.ZERO)
-            .vatAmount(BigDecimal.ZERO)
+            .vatRate(dto.vatRate())
             .build();
 
         if (dto.items() != null) {
             dto.items().forEach(itemDTO -> {
                 InvoiceItem item = new InvoiceItem();
+                item.setName(itemDTO.name());
                 item.setQuantity(itemDTO.quantity());
                 item.setUnitPrice(itemDTO.unitPrice());
                 invoice.addItem(item);

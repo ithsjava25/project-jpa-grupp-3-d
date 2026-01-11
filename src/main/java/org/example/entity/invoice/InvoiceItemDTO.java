@@ -4,16 +4,20 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import jakarta.validation.constraints.NotBlank;
 
 @Builder
 public record InvoiceItemDTO(
     UUID id,
+    @NotBlank(message = "Name cannot be empty")
+    String name,
     int quantity,
     BigDecimal unitPrice
 ) {
     public static InvoiceItemDTO fromEntity(InvoiceItem item) {
         return InvoiceItemDTO.builder()
             .id(item.getId())
+            .name(item.getName())
             .quantity(item.getQuantity())
             .unitPrice(item.getUnitPrice())
             .build();

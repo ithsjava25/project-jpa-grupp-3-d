@@ -20,6 +20,7 @@ import org.example.util.JpaUtil;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -595,8 +596,29 @@ public class CliApp {
             List<InvoiceDTO> invoices = invoiceService.getInvoicesByCompany(currentCompanyId);
             if (invoices.isEmpty()) {
                 System.out.println("There are currently no invoices under this company");
+                return;
             }
-            invoices.forEach(System.out::println);
+
+            for (InvoiceDTO invoice : invoices) {
+                System.out.println("Invoice: " + invoice.number());
+                System.out.println("Status : " + invoice.status());
+                System.out.printf("Amount : %.2f%n", invoice.amount());
+                System.out.printf("VAT    : %.2f%n", invoice.vatAmount());
+                System.out.println("Due    : " + invoice.dueDate().toLocalDate());
+
+                System.out.println("Items:");
+                if (invoice.items().isEmpty()) {
+                    System.out.println(" - (no items)");
+                } else {
+                    for (InvoiceItemDTO item : invoice.items()) {
+                        System.out.printf(" - %s: %d x %.2f%n",
+                            item.name() == null || item.name().isBlank() ? "(no name)" : item.name(),
+                            item.quantity(),
+                            item.unitPrice());
+                    }
+                }
+                System.out.println("--------------------------------------------------");
+            }
         } catch (EntityNotFoundException e) {
             System.out.println("✗ Failed to list invoices: " + e.getMessage());
         }
@@ -643,6 +665,9 @@ public class CliApp {
             LocalDate dueDate = LocalDate.parse(input);
             LocalDateTime dueDateTime = dueDate.atTime(23, 59);
 
+            System.out.print("Enter VAT rate (e.g. 0.25, 0.12): ");
+            String vatInput = scanner.nextLine().trim();
+            BigDecimal vatRate = vatInput.isEmpty() ? null : new BigDecimal(vatInput);
 
             List<InvoiceItemDTO> items = readInvoiceItems();
 
@@ -656,19 +681,27 @@ public class CliApp {
                 selectedClient.id(),
                 invoiceNumber,
                 dueDateTime,
+                vatRate,
                 items
             );
 
             invoiceService.createInvoice(dto);
 
             System.out.println("✓ Invoice created");
-        }catch (java.time.format.DateTimeParseException e) {
+
+        }catch (IllegalArgumentException e) {
+            System.out.println("✗ Input error: " + e.getMessage());
+        }
+        catch (DateTimeParseException e) {
             System.out.println("✗ Invalid date format. Please use yyyy-MM-dd.");
-        } catch (BusinessRuleException e) {
+        }
+        catch (BusinessRuleException e) {
             System.out.println("✗ Business Rule Violation: " + e.getMessage());
-        } catch (EntityNotFoundException e) {
+        }
+        catch (EntityNotFoundException e) {
             System.out.println("✗ Creation failed: " + e.getMessage());
-        } catch (ValidationException e) {
+        }
+        catch (ValidationException e) {
             System.out.println("✗ Validation error: " + e.getMessage());
         }
     }
@@ -678,9 +711,14 @@ public class CliApp {
 
         while (true) {
             System.out.print("Add item? (y/n): ");
-            String choice = scanner.nextLine().trim();
+            if (!scanner.nextLine().trim().equalsIgnoreCase("y")) break;
 
-            if (!choice.equalsIgnoreCase("y")) break;
+            System.out.print("Item name (e.g. 'Consulting hours'): ");
+            String name = scanner.nextLine().trim();
+            if (name.isEmpty()) {
+                System.out.println("✗ Item name cannot be empty.");
+                continue;
+            }
 
             System.out.print("Quantity: ");
             int quantity = readInt();
@@ -689,12 +727,11 @@ public class CliApp {
             BigDecimal unitPrice = new BigDecimal(scanner.nextLine().trim());
 
             items.add(InvoiceItemDTO.builder()
+                .name(name)
                 .quantity(quantity)
                 .unitPrice(unitPrice)
-                .build()
-            );
+                .build());
         }
-
         return items;
     }
 
@@ -746,12 +783,21 @@ public class CliApp {
         InvoiceDTO invoice = selectInvoice();
         if (invoice == null) return;
 
+        System.out.println("--------------------------------------------------");
+        System.out.println("Invoice: " + invoice.number());
+        System.out.println("Status : " + invoice.status());
+        System.out.println("Items:");
         if (invoice.items().isEmpty()) {
-            System.out.println("No items for this invoice.");
-            return;
+            System.out.println(" - (no items)");
+        } else {
+            for (InvoiceItemDTO item : invoice.items()) {
+                System.out.printf(" - %s: %d x %.2f%n",
+                    item.name().isBlank() ? "(no name)" : item.name(),
+                    item.quantity(),
+                    item.unitPrice());
+            }
         }
-
-        invoice.items().forEach(System.out::println);
+        System.out.println("--------------------------------------------------");
     }
 
     private void addInvoiceItem() {
@@ -759,6 +805,9 @@ public class CliApp {
         if (invoice == null) return;
 
         try {
+            System.out.print("Item name: ");
+            String name = scanner.nextLine().trim();
+
             System.out.print("Quantity: ");
             int quantity = readInt();
 
@@ -767,12 +816,13 @@ public class CliApp {
 
             List<InvoiceItemDTO> updated = new ArrayList<>(invoice.items());
             updated.add(InvoiceItemDTO.builder()
+                .name(name)
                 .quantity(quantity)
                 .unitPrice(unitPrice)
                 .build()
             );
 
-            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, null, updated, null));
             System.out.println("✓ Invoice item added");
         } catch (NumberFormatException e) {
             System.out.println("✗ Invalid price format.");
@@ -817,7 +867,7 @@ public class CliApp {
                     : i)
                 .toList();
 
-            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, null, updated, null));
             System.out.println("✓ Invoice item updated");
 
         } catch (NumberFormatException e) {
@@ -857,7 +907,7 @@ public class CliApp {
                 .filter(i -> !i.id().equals(item.id()))
                 .toList();
 
-            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, updated, null));
+            invoiceService.updateInvoice(new UpdateInvoiceDTO(invoice.id(), null, null, updated, null));
             System.out.println("✓ Invoice item removed");
 
         } catch (EntityNotFoundException e) {
@@ -888,6 +938,7 @@ public class CliApp {
         }
     }
 
+
     private InvoiceDTO selectInvoice() {
         List<InvoiceDTO> invoices = invoiceService.getInvoicesByCompany(currentCompanyId);
 
@@ -898,8 +949,12 @@ public class CliApp {
 
         for (int i = 0; i < invoices.size(); i++) {
             InvoiceDTO inv = invoices.get(i);
-            System.out.println((i + 1) + ". " + inv.number() + " | " + inv.status() + " | " + inv.items().size() + " items");
+            System.out.println("--------------------------------------------------");
+            System.out.println((i + 1) + ". Invoice: " + inv.number());
+            System.out.println("   Status : " + inv.status());
+            System.out.println("   Items  : " + inv.items().size());
         }
+        System.out.println("--------------------------------------------------");
 
         System.out.print("Select invoice number: ");
         int index = readInt() - 1;
