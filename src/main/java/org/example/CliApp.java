@@ -316,8 +316,7 @@ public class CliApp {
     private boolean selectCompany() {
         try {
             // Get all companies the user is associated with
-            List<CompanyUser> userCompanies =
-                companyUserService.getUserCompanies(currentUserId);
+            List<CompanyUser> userCompanies = companyUserService.getUserCompanies(currentUserId);
 
             if (userCompanies.isEmpty()) {
                 System.out.println("✗ You are not associated with any companies.");
@@ -325,38 +324,52 @@ public class CliApp {
                 return false;
             }
 
-            System.out.println("\n--- Your Companies ---");
-            for (int i = 0; i < userCompanies.size(); i++) {
-                CompanyUser cu = userCompanies.get(i);
-                Company company = cu.getCompany();
-                System.out.println((i + 1) + ". " + company.getName() + " (" + company.getOrgNum() + ")");
+            while (true) { // <-- add retry loop
+                System.out.println("\n--- Your Companies ---");
+                for (int i = 0; i < userCompanies.size(); i++) {
+                    CompanyUser cu = userCompanies.get(i);
+                    Company company = cu.getCompany();
+                    System.out.println((i + 1) + ". " + company.getName() + " (" + company.getOrgNum() + ")");
+                }
+
+                System.out.print("\nSelect company (1-" + userCompanies.size() + ") or 'cancel' to go back: ");
+                String input = scanner.nextLine().trim();
+
+                if (input.equalsIgnoreCase("cancel")) {
+                    return false;
+                }
+
+                int choice;
+                try {
+                    choice = Integer.parseInt(input);
+                } catch (NumberFormatException e) {
+                    System.out.println("✗ Invalid input: please enter a number.");
+                    continue; // retry
+                }
+
+                if (choice < 1 || choice > userCompanies.size()) {
+                    System.out.println("✗ Invalid selection: number out of range.");
+                    continue; // retry
+                }
+
+                Company selectedCompany = userCompanies.get(choice - 1).getCompany();
+                currentCompany = CompanyDTO.fromEntity(selectedCompany);
+                currentCompanyId = currentCompany.id();
+
+                System.out.println("✓ Company selected: " +
+                    currentCompany.name() + " (" + currentCompany.orgNum() + ")");
+                return true;
             }
-
-            System.out.print("\nSelect company (1-" + userCompanies.size() + "): ");
-            int choice = readInt();
-
-            if (choice < 1 || choice > userCompanies.size()) {
-                System.out.println("✗ Invalid selection.");
-                return false;
-            }
-
-            Company selectedCompany = userCompanies.get(choice - 1).getCompany();
-            currentCompany = CompanyDTO.fromEntity(selectedCompany);
-            currentCompanyId = currentCompany.id();
-
-            System.out.println("✓ Company selected: " +
-                currentCompany.name() + " (" + currentCompany.orgNum() + ")");
-            return true;
 
         } catch (ValidationException e) {
             System.out.println("✗ Invalid request: " + e.getMessage());
             return false;
-
         } catch (EntityNotFoundException e) {
             System.out.println("✗ Company not found.");
             return false;
         }
     }
+
 
 
     private void mainMenu() {
