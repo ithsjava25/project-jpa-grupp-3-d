@@ -14,7 +14,7 @@ public record InvoiceDTO(
     UUID clientId,
     String number,
     BigDecimal amount,
-    Float vatRate,
+    BigDecimal vatRate,
     BigDecimal vatAmount,
     LocalDateTime dueDate,
     LocalDateTime createdAt,

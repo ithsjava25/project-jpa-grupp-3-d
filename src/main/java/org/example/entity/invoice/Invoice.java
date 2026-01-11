@@ -39,7 +39,7 @@ public class Invoice {
     @Column(name= "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
-    private Float vatRate;
+    private BigDecimal vatRate;
 
     private BigDecimal vatAmount;
 
@@ -74,7 +74,8 @@ public class Invoice {
             .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal vat = (vatRate != null ? BigDecimal.valueOf(vatRate) : BigDecimal.ZERO).multiply(subTotal);
+        BigDecimal vat = (vatRate != null ? vatRate : BigDecimal.ZERO)
+            .multiply(subTotal);
         this.vatAmount = vat;
         this.amount = subTotal.add(vat);
     }

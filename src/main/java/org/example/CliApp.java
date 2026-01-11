@@ -20,6 +20,7 @@ import org.example.util.JpaUtil;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -666,8 +667,7 @@ public class CliApp {
 
             System.out.print("Enter VAT rate (e.g. 0.25, 0.12): ");
             String vatInput = scanner.nextLine().trim();
-            Float vatRate = vatInput.isEmpty() ? null : Float.parseFloat(vatInput);
-
+            BigDecimal vatRate = vatInput.isEmpty() ? null : new BigDecimal(vatInput);
 
             List<InvoiceItemDTO> items = readInvoiceItems();
 
@@ -688,14 +688,22 @@ public class CliApp {
             invoiceService.createInvoice(dto);
 
             System.out.println("✓ Invoice created");
-        }catch (java.time.format.DateTimeParseException e) {
+
+        }
+        catch (DateTimeParseException e) {
             System.out.println("✗ Invalid date format. Please use yyyy-MM-dd.");
-        } catch (BusinessRuleException e) {
+        }
+        catch (BusinessRuleException e) {
             System.out.println("✗ Business Rule Violation: " + e.getMessage());
-        } catch (EntityNotFoundException e) {
+        }
+        catch (EntityNotFoundException e) {
             System.out.println("✗ Creation failed: " + e.getMessage());
-        } catch (ValidationException e) {
+        }
+        catch (ValidationException e) {
             System.out.println("✗ Validation error: " + e.getMessage());
+        }
+        catch (NumberFormatException e) {
+            System.out.println("✗ Invalid VAT rate format. Please use decimal format (e.g., 0.25).");
         }
     }
 
