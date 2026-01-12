@@ -8,6 +8,7 @@ import org.example.exception.EntityNotFoundException;
 import org.example.repository.CompanyRepository;
 import org.example.repository.CompanyUserRepository;
 import org.example.repository.UserRepository;
+import org.example.util.ValidationUtil;
 
 import java.util.UUID;
 
@@ -29,6 +30,7 @@ public class CompanyService {
     }
 
     public CompanyDTO create(UUID creatorUserId, CreateCompanyDTO dto) {
+        ValidationUtil.validate(dto);
 
         log.debug(
             "Company creation started: orgNum={}, name={}, creatorUserId={}",
@@ -67,6 +69,7 @@ public class CompanyService {
     }
 
     public CompanyDTO update(UpdateCompanyDTO dto) {
+        ValidationUtil.validate(dto);
 
         log.debug("Company update requested: companyId={}", dto.companyId());
 

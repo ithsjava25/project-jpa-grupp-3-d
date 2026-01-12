@@ -8,6 +8,7 @@ import org.example.exception.EntityNotFoundException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
 import org.example.repository.InvoiceRepository;
+import org.example.util.ValidationUtil;
 import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,8 @@ public class InvoiceService {
     }
 
     public InvoiceDTO createInvoice(CreateInvoiceDTO dto) {
+        ValidationUtil.validate(dto);
+
         if (invoiceRepository.findByInvoiceNumber(dto.number()).isPresent()) {
             log.warn("Invoice creation failed: Number {} is already in use for company {}", dto.number(), dto.companyId());
             throw new BusinessRuleException("Invoice number already in use: " + dto.number());
@@ -50,6 +53,8 @@ public class InvoiceService {
 
 
     public InvoiceDTO updateInvoice(UpdateInvoiceDTO dto) {
+        ValidationUtil.validate(dto);
+
         log.info("Updating invoice ID: {}", dto.invoiceId());
 
         Invoice invoice = invoiceRepository.findByIdWithItems(dto.invoiceId())

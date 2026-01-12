@@ -8,6 +8,7 @@ import org.example.entity.client.UpdateClientDTO;
 import org.example.exception.EntityNotFoundException;
 import org.example.repository.ClientRepository;
 import org.example.repository.CompanyRepository;
+import org.example.util.ValidationUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ public class ClientService {
     }
 
     public ClientDTO createClient(CreateClientDTO dto) {
+        ValidationUtil.validate(dto);
 
         Company company = companyRepository.findById(dto.companyId())
             .orElseThrow(() -> new EntityNotFoundException("Company", dto.companyId()));
@@ -45,6 +47,7 @@ public class ClientService {
     }
 
     public ClientDTO updateClient(UpdateClientDTO dto) {
+        ValidationUtil.validate(dto);
 
         Client client = clientRepository.findById(dto.clientId())
             .orElseThrow(() -> new EntityNotFoundException("Client", dto.clientId()));
