@@ -48,7 +48,8 @@ public class InvoiceServiceTest {
     void testCreateInvoice_Success() {
         UUID companyId = UUID.randomUUID();
         UUID clientId = UUID.randomUUID();
-        CreateInvoiceDTO createDto = new CreateInvoiceDTO(companyId, clientId, "INV-001", LocalDateTime.now().plusDays(14), List.of());
+        List<InvoiceItemDTO> items = List.of(new InvoiceItemDTO(null, 1, new BigDecimal("100.00")));
+        CreateInvoiceDTO createDto = new CreateInvoiceDTO(companyId, clientId, "INV-001", LocalDateTime.now().plusDays(14), items);
 
         Company company = new Company(); company.setId(companyId);
         Client client = new Client(); client.setId(clientId);
@@ -152,7 +153,8 @@ public class InvoiceServiceTest {
     @Test
     void testCreateInvoice_CompanyNotFound() {
         UUID companyId = UUID.randomUUID();
-        CreateInvoiceDTO dto = new CreateInvoiceDTO(companyId, UUID.randomUUID(), "INV-X", LocalDateTime.now(), List.of());
+        List<InvoiceItemDTO> items = List.of(new InvoiceItemDTO(null, 1, new BigDecimal("100.00")));
+        CreateInvoiceDTO dto = new CreateInvoiceDTO(companyId, UUID.randomUUID(), "INV-X", LocalDateTime.now(), items);
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
 
@@ -164,7 +166,8 @@ public class InvoiceServiceTest {
     void testCreateInvoice_ClientNotFound() {
         UUID companyId = UUID.randomUUID();
         UUID clientId = UUID.randomUUID();
-        CreateInvoiceDTO dto = new CreateInvoiceDTO(companyId, clientId, "INV-X", LocalDateTime.now(), List.of());
+        List<InvoiceItemDTO> items = List.of(new InvoiceItemDTO(null, 1, new BigDecimal("100.00")));
+        CreateInvoiceDTO dto = new CreateInvoiceDTO(companyId, clientId, "INV-X", LocalDateTime.now(), items);
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(new Company()));
         when(clientRepository.findById(clientId)).thenReturn(Optional.empty());
@@ -204,8 +207,11 @@ public class InvoiceServiceTest {
 
     @Test
     void testCreateInvoice_NumberAlreadyExists() {
-        CreateInvoiceDTO createDto = new CreateInvoiceDTO(UUID.randomUUID(), UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), List.of());
+        List<InvoiceItemDTO> items = List.of(new InvoiceItemDTO(null, 1, new BigDecimal("100.00")));
+        CreateInvoiceDTO createDto = new CreateInvoiceDTO(UUID.randomUUID(), UUID.randomUUID(), "INV-EXIST", LocalDateTime.now(), items);
         when(invoiceRepository.findByInvoiceNumber("INV-EXIST")).thenReturn(Optional.of(new Invoice()));
+        when(companyRepository.findById(any())).thenReturn(Optional.of(new Company()));
+        when(clientRepository.findById(any())).thenReturn(Optional.of(new Client()));
         assertThrows(BusinessRuleException.class, () -> invoiceService.createInvoice(createDto));
     }
 

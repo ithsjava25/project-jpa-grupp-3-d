@@ -43,7 +43,7 @@ class CompanyServiceTest {
         user.setId(userId);
 
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890",
+            "123456-7890",
             "company@email.com",
             "0701234567",
             "TestCo",
@@ -53,7 +53,7 @@ class CompanyServiceTest {
         );
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(false);
+        when(companyRepository.existsByOrgNum("123456-7890")).thenReturn(false);
 
         doAnswer(invocation -> {
             Company c = invocation.getArgument(0);
@@ -65,7 +65,7 @@ class CompanyServiceTest {
 
         assertNotNull(result);
         assertEquals("TestCo", result.name());
-        assertEquals("1234567890", result.orgNum());
+        assertEquals("123456-7890", result.orgNum());
 
         verify(companyRepository).create(any(Company.class));
         verify(companyUserRepository).create(any(CompanyUser.class));
@@ -76,7 +76,7 @@ class CompanyServiceTest {
     void createCompanyUserNotFound() {
         UUID userId = UUID.randomUUID();
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890", "email@test.com", null, "TestCo", null, null, null
+            "123456-7890", "email@test.com", null, "TestCo", null, null, null
         );
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
@@ -96,11 +96,11 @@ class CompanyServiceTest {
         user.setId(userId);
 
         CreateCompanyDTO dto = new CreateCompanyDTO(
-            "1234567890", "email@test.com", null, "TestCo", null, null, null
+            "123456-7890", "email@test.com", null, "TestCo", null, null, null
         );
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(companyRepository.existsByOrgNum("1234567890")).thenReturn(true);
+        when(companyRepository.existsByOrgNum("123456-7890")).thenReturn(true);
 
         assertThrows(BusinessRuleException.class,
             () -> companyService.create(userId, dto));

@@ -56,7 +56,7 @@ public class UserServiceTest {
         Exception exception = assertThrows(BusinessRuleException.class, () -> {
             userService.register(
                 new CreateUserDTO(
-                    "test", "test", email, "pass"
+                    "test", "test", email, "password123"
                 ));
         });
 
@@ -115,7 +115,7 @@ public class UserServiceTest {
                 ));
         });
 
-        assertEquals("Invalid registration data", exception.getMessage());
+        assertTrue(exception.getMessage().contains("email: Email must be a valid email address"));
         verify(userRepository, never()).create(any());
     }
 
@@ -131,7 +131,7 @@ public class UserServiceTest {
                 ));
         });
 
-        assertEquals("Password must be at least 8 characters", exception.getMessage());
+        assertTrue(exception.getMessage().contains("password: Password must be at least 8 characters"));
         verify(userRepository, never()).create(any());
     }
 }
